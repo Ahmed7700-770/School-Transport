@@ -242,7 +242,7 @@
           <div class="grid grid-3 mt8">
             <div>
               <label><i class="fas fa-school-flag"></i> اسم المدرسة *</label>
-              <input id="schoolName" placeholder="ادخل اسم مدرستك" />
+              <input id="schoolName" placeholder="مثال: مدرسة غرناطة الإعدادية للبنات" />
             </div>
             <div>
               <label><i class="fas fa-map-pin"></i> لوكيشن المدرسة (رابط أو lat,lng)</label>
@@ -321,7 +321,7 @@
                   </div>
                   <div>
                     <label><i class="fas fa-phone"></i> هاتف ولي الأمر *</label>
-                    <input id="guardianPhone" placeholder="رقم الهاتف" />
+                    <input id="guardianPhone" placeholder="05xxxxxxxx" />
                   </div>
                 </div>
                 <div>
@@ -390,6 +390,7 @@
             </div>
             <div class="row">
               <button class="btn danger" id="btnClearAll"><i class="fas fa-trash"></i> مسح كل البيانات (من الحساب)</button>
+
             </div>
           </div>
           <div class="table mt8">
@@ -476,7 +477,7 @@
       </section>
     </div>
 
-    <section class="footer">© 2025 – AHMED AL-HATTAMI  +974-77011693.</section>
+    <section class="footer">© 2025 – البيانات تُحفظ في Supabase مع سياسات RLS.</section>
   </main>
 
   <div id="alertContainer"></div>
@@ -1168,6 +1169,26 @@
     qs('#themeToggle').addEventListener('click', toggleTheme);
     (async ()=>{ await bootstrap(); })();
   </script>
+<script>
+
+qs('#btnClearAll').addEventListener('click', async () => {
+  if (!confirm('تأكيد مسح جميع سجلات الطلاب من حسابك؟ هذا الإجراء غير قابل للاسترجاع.')) return;
+  try {
+    // تعطيل الزر مؤقتًا
+    const btn = qs('#btnClearAll');
+    btn.disabled = true;
+
+    await sbDeleteAll();          // يمسح الطلاب حسب profile_id
+    await reloadAll();            // يعيد تحميل الحالة والجدول والخريطة
+    showAlert('تم مسح جميع سجلات الطلاب بنجاح.', 'success');
+  } catch (e) {
+    showAlert('خطأ أثناء المسح: ' + e.message, 'error');
+  } finally {
+    const btn = qs('#btnClearAll');
+    if (btn) btn.disabled = false;
+  }
+});
+</script>
+
 </body>
 </html>
-
