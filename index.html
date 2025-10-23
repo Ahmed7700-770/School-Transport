@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>نظام النقل المدرسي – Supabase + تسجيل الدخول</title>
+  <title>نظام النقل المدرسي – تصميم فاخر</title>
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -15,93 +15,1040 @@
   <!-- Supabase JS v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
   <style>
-    :root{
-      --bg:#0f172a; --card:#0b1220; --muted:#94a3b8; --text:#e2e8f0; --accent:#22c55e; --accent2:#38bdf8; --danger:#ef4444; --warning:#f59e0b; --border:#1f2a44;
-    }
-    *{box-sizing:border-box}
-    body{margin:0; font-family:"Segoe UI", system-ui, Tahoma, Arial; background:linear-gradient(120deg,#0b1020,#0f1c2e 60%,#0a1a25); color:var(--text)}
-    header{padding:20px; border-bottom:1px solid var(--border); background:#091121a6; position:sticky; top:0; backdrop-filter:saturate(140%) blur(8px); z-index:3}
-    h1{margin:0; font-size:22px}
-    .container{max-width:1200px; margin:24px auto; padding:0 16px}
-    .grid{display:grid; gap:16px}
-    .grid-2{grid-template-columns:repeat(2,1fr)}
-    .grid-3{grid-template-columns:repeat(3,1fr)}
-    .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow:0 10px 30px #00000033; transition:transform 0.2s, box-shadow 0.2s;}
-    .card:hover{transform:translateY(-2px); box-shadow:0 12px 35px #00000055;}
-    label{font-size:12px; color:var(--muted); display:block; margin:0 0 6px 0}
-    input, select, textarea{width:100%; background:#0f172a; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 12px; outline:none; transition:border-color 0.2s}
-    input:focus, select:focus, textarea:focus{border-color:var(--accent2)}
-    textarea{resize:vertical; min-height:38px}
-    .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-    .btn{border:1px solid var(--border); background:#0f172a; color:var(--text); padding:9px 14px; border-radius:12px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s}
-    .btn:hover{background:#1e293b}
-    .btn.primary{background:linear-gradient(90deg,#22c55e,#16a34a); border:none}
-    .btn.info{background:linear-gradient(90deg,#38bdf8,#06b6d4); border:none}
-    .btn.warn{background:linear-gradient(90deg,#f59e0b,#f97316); border:none}
-    .btn.danger{background:linear-gradient(90deg,#ef4444,#dc2626); border:none}
-    .btn:disabled{opacity:.6; cursor:not-allowed}
-    .toolbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-    .table{width:100%; border-collapse:collapse; border:1px solid var(--border); border-radius:12px; overflow:auto}
-    table{width:100%; border-collapse:collapse}
-    thead th{position:sticky; top:0; background:#0b1424; border-bottom:1px solid var(--border); padding:10px; text-align:right; font-size:12px; color:#93c5fd}
-    tbody td{border-bottom:1px solid var(--border); padding:8px; font-size:13px}
-    tbody tr:hover{background:#0f172a55}
-    .badge{display:inline-block; padding:3px 8px; border-radius:999px; background:#0b2540; color:#7dd3fc; border:1px solid #13325a; font-size:11px}
-    .required{outline:1px dashed #ef4444; background:#2b0f12}
-    .hint{font-size:12px; color:var(--muted)}
-    .split{display:grid; grid-template-columns: 1fr 1fr; gap:16px}
-    @media (max-width:920px){ .grid-2,.grid-3,.split{grid-template-columns:1fr} }
-    .pill{border-radius:999px; padding:6px 10px; background:#0b1424; border:1px solid var(--border); color:#a3e635; font-size:12px}
-    .footer{color:#9ca3af; font-size:12px; text-align:center; padding:16px}
-    .mini{font-size:11px; color:#9ca3af}
-    .mt8{margin-top:8px}
-    #map{height:60vh; border-radius:16px; border:1px solid var(--border)}
-    .legend{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
-    .legend .item{display:flex; align-items:center; gap:6px; background:#0b1322; border:1px solid var(--border); padding:6px 10px; border-radius:999px}
-    .swatch{width:14px; height:14px; border-radius:4px; border:1px solid #0006}
-    .icon-btn{display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:#1e293b; border:1px solid var(--border); cursor:pointer; transition:all 0.2s}
-    .icon-btn:hover{background:#334155}
-    .alert{position:fixed; top:20px; right:20px; padding:12px 16px; border-radius:8px; background:#0b1322; border:1px solid var(--border); box-shadow:0 4px 12px #00000055; z-index:1000; display:flex; align-items:center; gap:8px; transition:all 0.3s; transform:translateX(150%);} .alert.show{transform:translateX(0);} .alert.success{border-left:4px solid var(--accent);} .alert.error{border-left:4px solid var(--danger);} .alert.info{border-left:4px solid var(--accent2);}    
-
-    /* شاشة الدخول */
-    .auth-overlay{position:fixed; inset:0; background:linear-gradient(135deg,#0a1222,#07101a); display:flex; align-items:center; justify-content:center; z-index:999;}
-    .auth-card{width:min(520px,94vw); background:#0b1220; border:1px solid var(--border); border-radius:20px; padding:22px; box-shadow:0 20px 60px #00000066}
-    .auth-title{font-size:20px; margin-bottom:10px}
-
-    /* ===== Marker styles (Font Awesome divIcon) ===== */
-    .fa-marker{
-      position:relative; display:inline-flex; align-items:center; justify-content:center;
-      border-radius:50%; box-shadow:0 6px 16px #00000066;
-      border:2px solid #fff; background:var(--m-bg,#0ea5e9);
-      width:34px; height:34px; color:#fff; font-size:16px;
-    }
-    .fa-marker.bus{ background:var(--m-bg,#3b82f6); }
-    .fa-marker.student{ background:var(--m-bg,#22c55e); }
-    .fa-marker.observer{ background:var(--m-bg,#94a3b8); }
-    .fa-marker.school{ background:var(--m-bg,#f59e0b); }
-    .fa-marker .fa{ filter: drop-shadow(0 1px 1px #0008); }
-    .fa-marker.pin::after{
-      content:""; position:absolute; bottom:-6px; left:50%; transform:translateX(-50%);
-      width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #fff;
+    :root {
+      /* Dark Luxury Theme (Default) */
+      --bg-gradient: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
+      --glass-bg: rgba(30, 41, 59, 0.4);
+      --glass-border: rgba(148, 163, 184, 0.18);
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #10b981;
+      --accent-glow: rgba(16, 185, 129, 0.4);
+      --accent2: #3b82f6;
+      --accent2-glow: rgba(59, 130, 246, 0.4);
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #10b981;
+      --purple: #a855f7;
+      --pink: #ec4899;
+      --cyan: #06b6d4;
+      --border: rgba(148, 163, 184, 0.2);
+      --input-bg: rgba(15, 23, 42, 0.6);
+      --blur-amount: 12px;
+      
+      /* Bus Colors - 12 distinct colors */
+      --bus-color-1: #ef4444;
+      --bus-color-2: #f97316;
+      --bus-color-3: #f59e0b;
+      --bus-color-4: #eab308;
+      --bus-color-5: #84cc16;
+      --bus-color-6: #10b981;
+      --bus-color-7: #06b6d4;
+      --bus-color-8: #3b82f6;
+      --bus-color-9: #6366f1;
+      --bus-color-10: #8b5cf6;
+      --bus-color-11: #a855f7;
+      --bus-color-12: #ec4899;
     }
 
-    /* ===== منسقات نافذة البيانات (popup) ===== */
-    .leaflet-popup-content-wrapper { background:#0b1220; color:#e5e7eb; border:1px solid #1f2a44; border-radius:14px; }
-    .leaflet-popup-tip { background:#0b1220; }
-    .map-popup { min-width: 240px; }
-    .map-popup .title { font-weight:700; margin-bottom:6px; font-size:14px; }
-    .map-popup .meta { font-size:12px; color:#93c5fd; margin-bottom:6px; }
-    .map-popup .grid { display:grid; grid-template-columns: 1fr; gap:6px; font-size:13px; }
-    .map-popup .row { display:flex; align-items:center; gap:8px; }
-    .map-popup .key { color:#94a3b8; min-width:88px; }
-    .map-popup .value { color:#e5e7eb; }
-    .map-popup .actions { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
-    .map-popup .btn-link { text-decoration:none; border:1px solid #1f2a44; padding:6px 10px; border-radius:999px; background:#0f172a; color:#e5e7eb; }
-    .map-popup .btn-link:hover { background:#1e293b; }
+    [data-theme="light"] {
+      /* Light Luxury Theme */
+      --bg-gradient: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%);
+      --glass-bg: rgba(255, 255, 255, 0.7);
+      --glass-border: rgba(148, 163, 184, 0.3);
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --accent: #059669;
+      --accent-glow: rgba(5, 150, 105, 0.3);
+      --accent2: #2563eb;
+      --accent2-glow: rgba(37, 99, 235, 0.3);
+      --input-bg: rgba(255, 255, 255, 0.5);
+      --border: rgba(100, 116, 139, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Tajawal', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Animated Background Particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 50%, var(--accent-glow) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, var(--accent2-glow) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(168, 85, 247, 0.3) 0%, transparent 50%);
+      opacity: 0.4;
+      pointer-events: none;
+      animation: float 20s ease-in-out infinite;
+      z-index: 0;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -30px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* Glass Morphism Base */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--blur-amount));
+      -webkit-backdrop-filter: blur(var(--blur-amount));
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.5);
+      border-color: rgba(148, 163, 184, 0.4);
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 20px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: inline-block;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.2); }
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 24px auto;
+      padding: 0 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .grid {
+      display: grid;
+      gap: 20px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+    /* Luxury Card */
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--blur-amount));
+      -webkit-backdrop-filter: blur(var(--blur-amount));
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--glass-shadow);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--accent) 30%, 
+        var(--accent2) 70%, 
+        transparent 100%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      border-color: rgba(148, 163, 184, 0.4);
+    }
+
+    /* Inputs */
+    label {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: block;
+      margin: 0 0 8px 0;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--input-bg);
+      backdrop-filter: blur(8px);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px var(--accent2-glow), 0 4px 12px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+      background: rgba(15, 23, 42, 0.8);
+    }
+
+    input:hover, select:hover, textarea:hover {
+      border-color: rgba(148, 163, 184, 0.4);
+    }
+
+    textarea { resize: vertical; min-height: 60px; }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Luxury Buttons */
+    .btn {
+      position: relative;
+      border: 1px solid var(--border);
+      background: var(--input-bg);
+      backdrop-filter: blur(8px);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      font-family: 'Tajawal', sans-serif;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      border-color: rgba(148, 163, 184, 0.5);
+    }
+
+    .btn:active {
+      transform: translateY(-1px);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+
+    .btn.primary:hover {
+      box-shadow: 0 8px 32px var(--accent-glow);
+      filter: brightness(1.1);
+    }
+
+    .btn.info {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 16px var(--accent2-glow);
+    }
+
+    .btn.info:hover {
+      box-shadow: 0 8px 32px var(--accent2-glow);
+      filter: brightness(1.1);
+    }
+
+    .btn.warn {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn.warn:hover {
+      box-shadow: 0 8px 32px rgba(245, 158, 11, 0.6);
+    }
+
+    .btn.danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn.danger:hover {
+      box-shadow: 0 8px 32px rgba(239, 68, 68, 0.6);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Luxury Table */
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--blur-amount));
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--text);
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-bottom: 2px solid var(--border);
+      padding: 16px 12px;
+      text-align: right;
+      font-size: 13px;
+      color: var(--accent2);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tbody td {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 12px;
+      font-size: 14px;
+      color: var(--text);
+      transition: all 0.3s;
+    }
+
+    tbody tr {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    tbody tr:hover {
+      background: rgba(59, 130, 246, 0.1);
+      transform: scale(1.01);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: var(--glass-bg);
+      border: 1px solid var(--border);
+      color: var(--accent2);
+      font-size: 12px;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+    }
+
+    .required {
+      outline: 2px dashed var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+      animation: pulse-red 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-red {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+
+    .hint {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 920px) {
+      .grid-2, .grid-3, .split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 8px 16px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .footer {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .mini {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .mt8 {
+      margin-top: 12px;
+    }
+
+    /* Map Styling */
+    #map {
+      height: 65vh;
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--glass-shadow);
+    }
+
+    #map,
+    .leaflet-container {
+      touch-action: pan-x pan-y !important;
+      -ms-touch-action: pan-x pan-y !important;
+      cursor: grab;
+      z-index: 1;
+    }
+
+    .leaflet-container.leaflet-dragging {
+      cursor: grabbing;
+    }
+
+    .auth-overlay[style*="display:none"],
+    .auth-overlay[style*="display: none"] {
+      pointer-events: none;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .legend .item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 999px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .legend .item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      border-color: var(--accent2);
+    }
+
+    .swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .icon-btn:hover {
+      transform: translateY(-2px) rotate(5deg);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      border-color: var(--accent2);
+    }
+
+    /* Alert */
+    .alert {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translateX(150%);
+      min-width: 300px;
+    }
+
+    .alert.show {
+      transform: translateX(0);
+    }
+
+    .alert.success {
+      border-left: 4px solid var(--success);
+      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+    }
+
+    .alert.error {
+      border-left: 4px solid var(--danger);
+      box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3);
+    }
+
+    .alert.info {
+      border-left: 4px solid var(--accent2);
+      box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Auth Overlay */
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(15, 20, 25, 0.98) 100%);
+      backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    [data-theme="light"] .auth-overlay {
+      background: linear-gradient(135deg, rgba(240, 249, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+    }
+
+    .auth-card {
+      width: min(560px, 94vw);
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      padding: 32px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+      animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .auth-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ===== LUXURY 3D MAP MARKERS ===== */
+    .custom-map-icon {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.5),
+        0 0 0 4px rgba(255, 255, 255, 0.1),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      animation: markerPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes markerPulse {
+      0%, 100% {
+        box-shadow: 
+          0 8px 24px rgba(0, 0, 0, 0.5),
+          0 0 0 4px rgba(255, 255, 255, 0.1),
+          inset 0 2px 4px rgba(255, 255, 255, 0.3);
+      }
+      50% {
+        box-shadow: 
+          0 12px 32px rgba(0, 0, 0, 0.6),
+          0 0 0 8px rgba(255, 255, 255, 0.2),
+          inset 0 2px 4px rgba(255, 255, 255, 0.4);
+      }
+    }
+
+    .custom-map-icon::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), transparent);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+
+    .custom-map-icon:hover {
+      transform: scale(1.2) translateY(-4px);
+      box-shadow: 
+        0 16px 48px rgba(0, 0, 0, 0.7),
+        0 0 0 6px rgba(255, 255, 255, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    }
+
+    .custom-map-icon i {
+      font-size: 20px;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      z-index: 1;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+    }
+
+    /* Student Icon - Green */
+    .custom-map-icon.student {
+      background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+    }
+
+    /* School Icon - Orange */
+    .custom-map-icon.school {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+    }
+
+    /* Observer Icon - Lime */
+    .custom-map-icon.observer {
+      background: linear-gradient(135deg, #84cc16 0%, #65a30d 50%, #4d7c0f 100%);
+    }
+
+    /* Bus Icons - 12 Different Colors */
+    .custom-map-icon.bus-1 { background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%); }
+    .custom-map-icon.bus-2 { background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%); }
+    .custom-map-icon.bus-3 { background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%); }
+    .custom-map-icon.bus-4 { background: linear-gradient(135deg, #eab308 0%, #ca8a04 50%, #a16207 100%); }
+    .custom-map-icon.bus-5 { background: linear-gradient(135deg, #84cc16 0%, #65a30d 50%, #4d7c0f 100%); }
+    .custom-map-icon.bus-6 { background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%); }
+    .custom-map-icon.bus-7 { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%); }
+    .custom-map-icon.bus-8 { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%); }
+    .custom-map-icon.bus-9 { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #4338ca 100%); }
+    .custom-map-icon.bus-10 { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%); }
+    .custom-map-icon.bus-11 { background: linear-gradient(135deg, #a855f7 0%, #9333ea 50%, #7e22ce 100%); }
+    .custom-map-icon.bus-12 { background: linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%); }
+
+    /* Enhanced Popup */
+    .leaflet-popup-content-wrapper {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      color: var(--text);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+      padding: 0;
+    }
+
+    .leaflet-popup-tip {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+    }
+
+    .map-popup {
+      min-width: 280px;
+      padding: 20px;
+    }
+
+    .map-popup .title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .map-popup .meta {
+      font-size: 13px;
+      color: var(--accent2);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .map-popup .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .map-popup .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .map-popup .key {
+      color: var(--text-muted);
+      min-width: 100px;
+      font-weight: 500;
+    }
+
+    .map-popup .value {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .map-popup .actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .map-popup .btn-link {
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 12px;
+      background: var(--input-bg);
+      backdrop-filter: blur(8px);
+      color: var(--text);
+      transition: all 0.3s;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .map-popup .btn-link:hover {
+      background: var(--accent2);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px var(--accent2-glow);
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: relative;
+      width: 70px;
+      height: 36px;
+      border-radius: 18px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 0 6px;
+      transition: all 0.4s;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .theme-toggle::before {
+      content: '';
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 12px rgba(245, 158, 11, 0.5);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] .theme-toggle::before {
+      transform: translateX(0);
+    }
+
+    [data-theme="light"] .theme-toggle::before {
+      transform: translateX(34px);
+    }
+
+    .theme-toggle i {
+      position: relative;
+      z-index: 1;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .theme-toggle .fa-sun {
+      color: #f59e0b;
+      margin-right: auto;
+    }
+
+    .theme-toggle .fa-moon {
+      color: #94a3b8;
+      margin-left: auto;
+    }
+
+    .theme-toggle:hover {
+      box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.3), 0 0 16px var(--accent2-glow);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--blur-amount));
+      border-radius: 18px;
+      padding: 6px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--glass-shadow);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 14px 20px;
+      text-align: center;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: 600;
+      color: var(--text-muted);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tab::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      color: white;
+      box-shadow: 0 4px 16px var(--accent-glow);
+      transform: scale(1.02);
+    }
+
+    .tab:not(.active):hover {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--text);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Collapsible Sections */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 16px 20px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--blur-amount));
+      border-radius: 18px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--glass-shadow);
+    }
+
+    .section-header:hover {
+      transform: translateX(-4px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      border-color: var(--accent2);
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-content {
+      overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .section-content.collapsed {
+      max-height: 0;
+    }
+
+    .section-content.expanded {
+      max-height: 3000px;
+    }
+
+    .toggle-icon {
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 18px;
+      color: var(--accent2);
+    }
+
+    .section-header.collapsed .toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--glass-bg);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      border-radius: 10px;
+      border: 2px solid var(--glass-bg);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, var(--accent2) 0%, var(--purple) 100%);
+    }
+
+    /* Loading Animation */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading {
+      animation: spin 1s linear infinite;
+    }
   </style>
 </head>
 <body>
+
   <!-- AUTH OVERLAY -->
   <div id="auth" class="auth-overlay" style="display:none">
     <div class="auth-card">
@@ -139,241 +1086,289 @@
         <button class="btn info" id="btnExportAll"><i class="fas fa-file-csv"></i> تصدير الكل</button>
         <label class="btn" for="fileImport"><i class="fas fa-file-import"></i> استيراد CSV</label>
         <input id="fileImport" type="file" accept=".csv" style="display:none" />
+        <div class="theme-toggle" id="themeToggle">
+          <i class="fas fa-sun"></i>
+          <i class="fas fa-moon"></i>
+        </div>
         <button class="btn" id="btnOpenAuth"><i class="fas fa-user"></i> الحساب</button>
       </div>
     </div>
   </header>
 
-  <main class="container grid" style="gap:20px" id="app" hidden>
-    <!-- إعداد المدرسة -->
-    <section class="card">
-      <div class="toolbar" style="justify-content:space-between">
-        <div class="row" style="gap:12px">
-          <span class="pill"><i class="fas fa-school"></i> إعداد المدرسة</span>
-          <span class="hint">احفظ اسم المدرسة وموقعها لتظهر نقطة خاصة على الخريطة.</span>
-        </div>
-        <div class="row">
-          <button class="btn primary" id="btnSaveSchool"><i class="fas fa-save"></i> حفظ إعداد المدرسة</button>
-          <button class="btn" id="btnClearSchool"><i class="fas fa-eraser"></i> تفريغ</button>
-        </div>
-      </div>
-      <div class="grid grid-3 mt8">
-        <div>
-          <label><i class="fas fa-school-flag"></i> اسم المدرسة *</label>
-          <input id="schoolName" placeholder="مثال: مدرسة غرناطة الإعدادية للبنات" />
-        </div>
-        <div>
-          <label><i class="fas fa-map-pin"></i> لوكيشن المدرسة (رابط أو lat,lng)</label>
-          <input id="schoolLocAny" placeholder="25.286,51.533 أو رابط خرائط" />
-          <div class="row mt8">
-            <a id="schoolMapLink" class="btn" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> فتح في Google Maps</a>
-          </div>
-        </div>
-        <div class="grid-2">
-          <div>
-            <label><i class="fas fa-map-marker-alt"></i> School Lat</label>
-            <input id="schoolLat" placeholder="25.286" />
-          </div>
-          <div>
-            <label><i class="fas fa-map-marker-alt"></i> School Lng</label>
-            <input id="schoolLng" placeholder="51.533" />
-          </div>
-        </div>
-      </div>
-    </section>
+  <main class="container" id="app" hidden>
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+      <div class="tab active" data-tab="students">الطلاب والباصات</div>
+      <div class="tab" data-tab="map">الخريطة التفاعلية</div>
+      <div class="tab" data-tab="management">الإدارة</div>
+    </div>
 
-    <!-- نموذج الطالب -->
-    <section class="card">
-      <div class="toolbar" style="justify-content:space-between">
-        <div class="row" style="gap:12px">
-          <span class="pill"><i class="fas fa-user-plus"></i> نموذج إدخال طالب</span>
-          <span class="hint">الحقول بعلامة * مطلوبة</span>
-        </div>
-        <div class="row">
-          <button class="btn warn" id="btnReset"><i class="fas fa-eraser"></i> تفريغ الحقول</button>
-          <button class="btn primary" id="btnAdd"><i class="fas fa-save"></i> حفظ / إضافة</button>
-        </div>
+    <!-- Tab Contents -->
+    <div class="tab-content active" id="tab-students">
+      <!-- إعداد المدرسة -->
+      <div class="section-header" id="schoolSectionHeader">
+        <h2><i class="fas fa-school"></i> إعداد المدرسة</h2>
+        <i class="fas fa-chevron-down toggle-icon"></i>
       </div>
-      <div class="split mt8">
-        <div>
-          <div class="grid grid-3">
+      <section class="section-content expanded" id="schoolSection">
+        <div class="card">
+          <div class="toolbar" style="justify-content:space-between">
+            <div class="row" style="gap:12px">
+              <span class="pill"><i class="fas fa-school"></i> إعداد المدرسة</span>
+              <span class="hint">احفظ اسم المدرسة وموقعها لتظهر نقطة خاصة على الخريطة.</span>
+            </div>
+            <div class="row">
+              <button class="btn primary" id="btnSaveSchool"><i class="fas fa-save"></i> حفظ إعداد المدرسة</button>
+              <button class="btn" id="btnClearSchool"><i class="fas fa-eraser"></i> تفريغ</button>
+            </div>
+          </div>
+          <div class="grid grid-3 mt8">
             <div>
-              <label><i class="fas fa-user"></i> اسم الطالب *</label>
-              <input id="studentName" placeholder="مثال: محمد علي" />
+              <label><i class="fas fa-school-flag"></i> اسم المدرسة *</label>
+              <input id="schoolName" placeholder="مثال: مدرسة غرناطة الإعدادية للبنات" />
             </div>
             <div>
-              <label><i class="fas fa-graduation-cap"></i> الصف</label>
-              <input id="grade" placeholder="مثال: الخامس" />
-            </div>
-            <div>
-              <label><i class="fas fa-users"></i> الشعبة</label>
-              <input id="klass" placeholder="مثال: ب" />
-            </div>
-
-            <div class="grid-2">
-              <div>
-                <label><i class="fas fa-map-marker-alt"></i> Lat</label>
-                <input id="lat" placeholder="25.286" />
-              </div>
-              <div>
-                <label><i class="fas fa-map-marker-alt"></i> Lng</label>
-                <input id="lng" placeholder="51.533" />
-              </div>
-            </div>
-            <div>
-              <label><i class="fas fa-map-pin"></i> لوكيشن (رابط أو lat,lng) – اختياري</label>
-              <input id="locAny" placeholder="25.286,51.533 أو رابط خرائط" />
+              <label><i class="fas fa-map-pin"></i> لوكيشن المدرسة (رابط أو lat,lng)</label>
+              <input id="schoolLocAny" placeholder="25.286,51.533 أو رابط خرائط" />
               <div class="row mt8">
-                <a id="mapLink" class="btn" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> فتح في Google Maps</a>
-                <button class="btn" id="copyMainMap"><i class="fas fa-copy"></i> نسخ الرابط</button>
+                <a id="schoolMapLink" class="btn" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> فتح في Google Maps</a>
               </div>
             </div>
-
             <div class="grid-2">
               <div>
-                <label><i class="fas fa-user-shield"></i> اسم ولي الأمر *</label>
-                <input id="guardianName" placeholder="اسم ولي الأمر" />
+                <label><i class="fas fa-map-marker-alt"></i> School Lat</label>
+                <input id="schoolLat" placeholder="25.286" />
               </div>
               <div>
-                <label><i class="fas fa-phone"></i> هاتف ولي الأمر *</label>
-                <input id="guardianPhone" placeholder="05xxxxxxxx" />
+                <label><i class="fas fa-map-marker-alt"></i> School Lng</label>
+                <input id="schoolLng" placeholder="51.533" />
               </div>
-            </div>
-            <div>
-              <label><i class="fas fa-id-card"></i> الرقم الشخصي *</label>
-              <input id="personalNo" placeholder="الرقم الشخصي" />
-            </div>
-            <div>
-              <label><i class="fas fa-sticky-note"></i> ملاحظة الباص / نقطة النزول</label>
-              <input id="busNote" placeholder="مثال: بوابة 2 – شارع 10" />
             </div>
           </div>
         </div>
-        <div>
-          <div class="card" style="background:#0a1322">
-            <div class="row" style="justify-content:space-between; margin-bottom:8px">
-              <div class="pill"><i class="fas fa-bus"></i> ربط برقم الباص</div>
-              <a class="btn info" href="#bus-admin"><i class="fas fa-cog"></i> إدارة قائمة الباصات</a>
+      </section>
+
+      <!-- نموذج الطالب -->
+      <div class="section-header" id="studentFormSectionHeader">
+        <h2><i class="fas fa-user-plus"></i> نموذج إدخال طالب</h2>
+        <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <section class="section-content expanded" id="studentFormSection">
+        <div class="card">
+          <div class="toolbar" style="justify-content:space-between">
+            <div class="row" style="gap:12px">
+              <span class="pill"><i class="fas fa-user-plus"></i> نموذج إدخال طالب</span>
+              <span class="hint">الحقول بعلامة * مطلوبة</span>
             </div>
-            <div class="grid grid-2">
-              <div>
-                <label><i class="fas fa-bus"></i> رقم الباص *</label>
-                <select id="busNo"></select>
-              </div>
-              <div>
-                <label><i class="fas fa-info-circle"></i> الحالة</label>
-                <select id="status">
-                  <option value="Active">Active</option>
-                  <option value="Withdrawn">Withdrawn</option>
-                  <option value="Suspended">Suspended</option>
-                </select>
-              </div>
-              <div>
-                <label><i class="fas fa-user-tie"></i> اسم السائق (تلقائي)</label>
-                <input id="driverName" disabled />
-              </div>
-              <div>
-                <label><i class="fas fa-phone"></i> هاتف السائق (تلقائي)</label>
-                <input id="driverPhone" disabled />
-              </div>
-              <div>
-                <label><i class="fas fa-user-check"></i> اسم الملاحظ (تلقائي)</label>
-                <input id="observerName" disabled />
-              </div>
-              <div>
-                <label><i class="fas fa-phone"></i> هاتف الملاحظ (تلقائي)</label>
-                <input id="observerPhone" disabled />
-              </div>
+            <div class="row">
+              <button class="btn warn" id="btnReset"><i class="fas fa-eraser"></i> تفريغ الحقول</button>
+              <button class="btn primary" id="btnAdd"><i class="fas fa-save"></i> حفظ / إضافة</button>
             </div>
           </div>
-          <div class="hint">اللصق في خانة "لوكيشن" يملأ الإحداثيات تلقائيًا إذا كانت Lat/Lng فارغة.</div>
-        </div>
-      </div>
-    </section>
+          <div class="split mt8">
+            <div>
+              <div class="grid grid-3">
+                <div>
+                  <label><i class="fas fa-user"></i> اسم الطالب *</label>
+                  <input id="studentName" placeholder="مثال: محمد علي" />
+                </div>
+                <div>
+                  <label><i class="fas fa-graduation-cap"></i> الصف</label>
+                  <input id="grade" placeholder="مثال: الخامس" />
+                </div>
+                <div>
+                  <label><i class="fas fa-users"></i> الشعبة</label>
+                  <input id="klass" placeholder="مثال: ب" />
+                </div>
 
-    <!-- جدول الطلاب -->
-    <section class="card">
-      <div class="toolbar" style="justify-content:space-between">
-        <div class="row" style="gap:8px">
-          <span class="pill"><i class="fas fa-table"></i> سجل الطلاب</span>
-          <input id="q" placeholder="ابحث بالاسم/ولي الأمر/الهاتف/الرقم الشخصي/الباص/الموقع" style="min-width:320px" />
-        </div>
-        <div class="row">
-          <button class="btn danger" id="btnClearAll"><i class="fas fa-trash"></i> مسح كل البيانات (من الحساب)</button>
-        </div>
-      </div>
-      <div class="table mt8">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>اسم الطالب</th>
-              <th>الموقع/الخريطة</th>
-              <th>Lat</th>
-              <th>Lng</th>
-              <th>ولي الأمر</th>
-              <th>هاتف</th>
-              <th>الرقم الشخصي</th>
-              <th>الباص</th>
-              <th>سائق</th>
-              <th>ملاحظ</th>
-              <th>حالة</th>
-              <th>ملاحظة</th>
-              <th>تاريخ</th>
-              <th>إجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
-      </div>
-    </section>
+                <div class="grid-2">
+                  <div>
+                    <label><i class="fas fa-map-marker-alt"></i> Lat</label>
+                    <input id="lat" placeholder="25.286" />
+                  </div>
+                  <div>
+                    <label><i class="fas fa-map-marker-alt"></i> Lng</label>
+                    <input id="lng" placeholder="51.533" />
+                  </div>
+                </div>
+                <div>
+                  <label><i class="fas fa-map-pin"></i> لوكيشن (رابط أو lat,lng) – اختياري</label>
+                  <input id="locAny" placeholder="25.286,51.533 أو رابط خرائط" />
+                  <div class="row mt8">
+                    <a id="mapLink" class="btn" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> فتح في Google Maps</a>
+                    <button class="btn" id="copyMainMap"><i class="fas fa-copy"></i> نسخ الرابط</button>
+                  </div>
+                </div>
 
-    <!-- إدارة الباصات -->
-    <section class="card" id="bus-admin">
-      <div class="pill"><i class="fas fa-cogs"></i> إدارة الباصات</div>
-
-      <!-- بطاقات -->
-      <div class="grid grid-3 mt8" id="busManager"></div>
-
-      <!-- نموذج إضافة/تعديل -->
-      <div class="row mt8" style="flex-wrap:wrap; gap:8px">
-        <input id="newBusNo" placeholder="رقم الباص *" />
-        <input id="newPlate" placeholder="رقم اللوحة *" />
-        <select id="newCapacity" style="min-width:120px">
-          <option value="">حجم الباص *</option>
-          <option>12</option><option>28</option><option>35</option><option>39</option>
-        </select>
-        <input id="newDriver" placeholder="اسم السائق" />
-        <input id="newDriverPhone" placeholder="هاتف السائق" />
-        <input id="newObserver" placeholder="اسم الملاحظ" />
-        <input id="newObserverPhone" placeholder="هاتف الملاحظ" />
-        <!-- لوكيشن الملاحظ -->
-        <input id="newObserverLocAny" placeholder="لوكيشن الملاحظ (رابط أو lat,lng)" style="min-width:240px" />
-        <input id="newObserverLat" placeholder="Obs Lat" style="max-width:120px" />
-        <input id="newObserverLng" placeholder="Obs Lng" style="max-width:120px" />
-        <div class="row" style="gap:8px">
-          <button class="btn primary" id="addBus"><i class="fas fa-plus"></i> <span id="busSubmitLabel">إضافة باص</span></button>
-          <button class="btn" id="cancelBusEdit" style="display:none"><i class="fas fa-times"></i> إلغاء التعديل</button>
+                <div class="grid-2">
+                  <div>
+                    <label><i class="fas fa-user-shield"></i> اسم ولي الأمر *</label>
+                    <input id="guardianName" placeholder="اسم ولي الأمر" />
+                  </div>
+                  <div>
+                    <label><i class="fas fa-phone"></i> هاتف ولي الأمر *</label>
+                    <input id="guardianPhone" placeholder="05xxxxxxxx" />
+                  </div>
+                </div>
+                <div>
+                  <label><i class="fas fa-id-card"></i> الرقم الشخصي *</label>
+                  <input id="personalNo" placeholder="الرقم الشخصي" />
+                </div>
+                <div>
+                  <label><i class="fas fa-sticky-note"></i> ملاحظة الباص / نقطة النزول</label>
+                  <input id="busNote" placeholder="مثال: بوابة 2 – شارع 10" />
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="card" style="background:var(--tab-bg)">
+                <div class="row" style="justify-content:space-between; margin-bottom:8px">
+                  <div class="pill"><i class="fas fa-bus"></i> ربط برقم الباص</div>
+                  <a class="btn info" href="#bus-admin"><i class="fas fa-cog"></i> إدارة قائمة الباصات</a>
+                </div>
+                <div class="grid grid-2">
+                  <div>
+                    <label><i class="fas fa-bus"></i> رقم الباص *</label>
+                    <select id="busNo"></select>
+                  </div>
+                  <div>
+                    <label><i class="fas fa-info-circle"></i> الحالة</label>
+                    <select id="status">
+                      <option value="Active">Active</option>
+                      <option value="Withdrawn">Withdrawn</option>
+                      <option value="Suspended">Suspended</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label><i class="fas fa-user-tie"></i> اسم السائق (تلقائي)</label>
+                    <input id="driverName" disabled />
+                  </div>
+                  <div>
+                    <label><i class="fas fa-phone"></i> هاتف السائق (تلقائي)</label>
+                    <input id="driverPhone" disabled />
+                  </div>
+                  <div>
+                    <label><i class="fas fa-user-check"></i> اسم الملاحظ (تلقائي)</label>
+                    <input id="observerName" disabled />
+                  </div>
+                  <div>
+                    <label><i class="fas fa-phone"></i> هاتف الملاحظ (تلقائي)</label>
+                    <input id="observerPhone" disabled />
+                  </div>
+                </div>
+              </div>
+              <div class="hint">اللصق في خانة "لوكيشن" يملأ الإحداثيات تلقائيًا إذا كانت Lat/Lng فارغة.</div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="hint">اضغط "تعديل" على بطاقة الباص لتعبئة الحقول أعلاه ثم "تحديث باص".</div>
-    </section>
+      </section>
 
-    <!-- الخريطة -->
-    <section class="card">
-      <div class="toolbar" style="justify-content:space-between">
-        <div class="row">
-          <span class="pill"><i class="fas fa-map"></i> الخريطة التفاعلية</span>
-          <select id="busFilter"><option value="">كل الباصات</option></select>
-          <button class="btn info" id="btnExportBus"><i class="fas fa-file-export"></i> تصدير الباص المحدد</button>
-          <button class="btn" id="fitAll"><i class="fas fa-expand"></i> إظهار جميع النقاط</button>
-          <button class="btn" id="refreshMap"><i class="fas fa-sync-alt"></i> تحديث</button>
-        </div>
-        <div class="row"><span class="hint">تُعرض نقاط الطلاب (حسب الباص)، ونقطة المدرسة، ونقاط ملاحظي الباصات.</span></div>
+      <!-- جدول الطلاب -->
+      <div class="section-header" id="studentsTableSectionHeader">
+        <h2><i class="fas fa-table"></i> سجل الطلاب</h2>
+        <i class="fas fa-chevron-down toggle-icon"></i>
       </div>
-      <div id="map" class="mt8"></div>
-      <div id="legend" class="legend"></div>
-    </section>
+      <section class="section-content expanded" id="studentsTableSection">
+        <div class="card">
+          <div class="toolbar" style="justify-content:space-between">
+            <div class="row" style="gap:8px">
+              <span class="pill"><i class="fas fa-table"></i> سجل الطلاب</span>
+              <input id="q" placeholder="ابحث بالاسم/ولي الأمر/الهاتف/الرقم الشخصي/الباص/الموقع" style="min-width:320px" />
+            </div>
+            <div class="row">
+              <button class="btn danger" id="btnClearAll"><i class="fas fa-trash"></i> مسح كل البيانات (من الحساب)</button>
+            </div>
+          </div>
+          <div class="table mt8">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>اسم الطالب</th>
+                  <th>الموقع/الخريطة</th>
+                  <th>Lat</th>
+                  <th>Lng</th>
+                  <th>ولي الأمر</th>
+                  <th>هاتف</th>
+                  <th>الرقم الشخصي</th>
+                  <th>الباص</th>
+                  <th>سائق</th>
+                  <th>ملاحظ</th>
+                  <th>حالة</th>
+                  <th>ملاحظة</th>
+                  <th>تاريخ</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="tab-content" id="tab-map">
+      <!-- الخريطة -->
+      <div class="section-header" id="mapSectionHeader">
+        <h2><i class="fas fa-map"></i> الخريطة التفاعلية</h2>
+        <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <section class="section-content expanded" id="mapSection">
+        <div class="card">
+          <div class="toolbar" style="justify-content:space-between">
+            <div class="row">
+              <span class="pill"><i class="fas fa-map"></i> الخريطة التفاعلية</span>
+              <select id="busFilter"><option value="">كل الباصات</option></select>
+              <button class="btn info" id="btnExportBus"><i class="fas fa-file-export"></i> تصدير الباص المحدد</button>
+              <button class="btn" id="fitAll"><i class="fas fa-expand"></i> إظهار جميع النقاط</button>
+              <button class="btn" id="refreshMap"><i class="fas fa-sync-alt"></i> تحديث</button>
+            </div>
+            <div class="row"><span class="hint">تُعرض نقاط الطلاب (حسب الباص)، ونقطة المدرسة، ونقاط ملاحظي الباصات.</span></div>
+          </div>
+          <div id="map" class="mt8"></div>
+          <div id="legend" class="legend"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="tab-content" id="tab-management">
+      <!-- إدارة الباصات -->
+      <div class="section-header" id="busAdminSectionHeader">
+        <h2><i class="fas fa-cogs"></i> إدارة الباصات</h2>
+        <i class="fas fa-chevron-down toggle-icon"></i>
+      </div>
+      <section class="section-content expanded" id="busAdminSection">
+        <div class="card">
+          <div class="pill"><i class="fas fa-cogs"></i> إدارة الباصات</div>
+
+          <!-- بطاقات -->
+          <div class="grid grid-3 mt8" id="busManager"></div>
+
+          <!-- نموذج إضافة/تعديل -->
+          <div class="row mt8" style="flex-wrap:wrap; gap:8px">
+            <input id="newBusNo" placeholder="رقم الباص *" />
+            <input id="newPlate" placeholder="رقم اللوحة *" />
+            <select id="newCapacity" style="min-width:120px">
+              <option value="">حجم الباص *</option>
+              <option>12</option><option>28</option><option>35</option><option>39</option>
+            </select>
+            <input id="newDriver" placeholder="اسم السائق" />
+            <input id="newDriverPhone" placeholder="هاتف السائق" />
+            <input id="newObserver" placeholder="اسم الملاحظ" />
+            <input id="newObserverPhone" placeholder="هاتف الملاحظ" />
+            <!-- لوكيشن الملاحظ -->
+            <input id="newObserverLocAny" placeholder="لوكيشن الملاحظ (رابط أو lat,lng)" style="min-width:240px" />
+            <input id="newObserverLat" placeholder="Obs Lat" style="max-width:120px" />
+            <input id="newObserverLng" placeholder="Obs Lng" style="max-width:120px" />
+            <div class="row" style="gap:8px">
+              <button class="btn primary" id="addBus"><i class="fas fa-plus"></i> <span id="busSubmitLabel">إضافة باص</span></button>
+              <button class="btn" id="cancelBusEdit" style="display:none"><i class="fas fa-times"></i> إلغاء التعديل</button>
+            </div>
+          </div>
+          <div class="hint">اضغط "تعديل" على بطاقة الباص لتعبئة الحقول أعلاه ثم "تحديث باص".</div>
+        </div>
+      </section>
+    </div>
 
     <section class="footer">© 2025 – البيانات تُحفظ في Supabase مع سياسات RLS.</section>
   </main>
@@ -420,18 +1415,40 @@
     function hashStr(str){ let h=0; for(let i=0;i<str.length;i++){ h=(h<<5)-h + str.charCodeAt(i); h|=0; } return Math.abs(h); }
     function busColor(busNo){ return busNo ? PALETTE[hashStr(busNo)%PALETTE.length] : '#9ca3af'; }
 
-    // ===== أيقونات ونوافذ منسّقة (FA + divIcon) =====
-    function createFAIcon({ type='student', fa='fa-user-graduate', bg, size=34 }) {
-      const classMap = { student:'student', observer:'observer', school:'school', bus:'bus' };
-      const className = `fa-marker pin ${classMap[type]||'student'}`;
-      const html = `<div class="${className}" style="${bg?`--m-bg:${bg};`:''} width:${size}px; height:${size}px">
-                      <i class="fa ${fa}"></i>
-                    </div>`;
+    // ===== أيقونات خرائط فاخرة مع ألوان مميزة لكل باص =====
+    function createCustomIcon({ type='student', busNo=null, sizeClass='zoom-medium' }) {
+      let className = 'custom-map-icon ';
+      let icon = '';
+      
+      // تحديد نوع الأيقونة
+      if (type === 'student') {
+        className += 'student';
+        icon = 'fa-user-graduate';
+      } else if (type === 'bus') {
+        // لون مختلف لكل باص (12 لون)
+        const busColors = ['bus-1', 'bus-2', 'bus-3', 'bus-4', 'bus-5', 'bus-6', 'bus-7', 'bus-8', 'bus-9', 'bus-10', 'bus-11', 'bus-12'];
+        const busIndex = busNo ? (hashStr(busNo) % 12) : 0;
+        className += busColors[busIndex];
+        icon = 'fa-bus';
+      } else if (type === 'observer') {
+        className += 'observer';
+        icon = 'fa-user-shield';
+      } else if (type === 'school') {
+        className += 'school';
+        icon = 'fa-school';
+      }
+
+      const html = `<div class="${className}"><i class="fas ${icon}"></i></div>`;
+
       return L.divIcon({
-        className: '',
-        html, iconSize: [size, size+6], iconAnchor: [size/2, size/2+6], popupAnchor: [0, -size/2]
+        className: 'custom-icon',
+        html,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
+        popupAnchor: [0, -22]
       });
     }
+
     function popupBtn(href, label, icon='fa-external-link-alt'){
       return `<a class="btn-link" target="_blank" rel="noopener" href="${href}">
                 <i class="fa ${icon}"></i> ${label}
@@ -439,6 +1456,62 @@
     }
     function mapLink(lat, lng){
       return `https://maps.google.com/?q=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`;
+    }
+
+    // ===================== THEME =====================
+    function initTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    }
+
+    // ===================== TABS =====================
+    function initTabs() {
+      const tabs = qsa('.tab');
+
+      function activateTab(tabEl){
+        tabs.forEach(t => t.classList.remove('active'));
+        qsa('.tab-content').forEach(c => c.classList.remove('active'));
+
+        tabEl.classList.add('active');
+        const tabId = tabEl.getAttribute('data-tab');
+        const content = qs(`#tab-${tabId}`);
+        content.classList.add('active');
+
+        if (tabId === 'map') {
+          ensureMap();
+          setTimeout(() => {
+            try { map.invalidateSize(true); } catch(e){}
+            renderMap({ fit: false }); // بدون أي تركيز تلقائي
+          }, 50);
+        }
+      }
+
+      tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
+
+      const initiallyActive = document.querySelector('.tab.active') || tabs[0];
+      if (initiallyActive) activateTab(initiallyActive);
+    }
+
+    // ===================== COLLAPSIBLE =====================
+    function initCollapsibleSections() {
+      const sectionHeaders = qsa('.section-header');
+      sectionHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+          const sectionId = header.id.replace('Header', '');
+          const content = qs(`#${sectionId}`);
+          if (content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed'); content.classList.add('expanded'); header.classList.remove('collapsed');
+          } else {
+            content.classList.remove('expanded'); content.classList.add('collapsed'); header.classList.add('collapsed');
+          }
+        });
+      });
     }
 
     // ===================== AUTH =====================
@@ -610,7 +1683,7 @@
         div.innerHTML = `<span class="swatch" style="background:${color}"></span> <span>${b.bus_no}</span>`;
         legend.appendChild(div);
       });
-      if(state.school){ 
+      if(state.school){
         const div = document.createElement('div'); div.className='item';
         div.innerHTML = `<span class="swatch" style="background:#f59e0b"></span> <span>المدرسة</span>`;
         legend.appendChild(div);
@@ -659,29 +1732,69 @@
       });
     }
 
-    // الخريطة
+    // ===================== MAP =====================
     let map, markersLayer, observersLayer, schoolLayer;
-    function ensureMap(){
-      if(map) return;
-      map = L.map('map', { zoomControl: true, attributionControl:false, minZoom: 2 });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
-      markersLayer = L.layerGroup().addTo(map);
-      observersLayer = L.layerGroup().addTo(map);
-      schoolLayer = L.layerGroup().addTo(map);
-      map.setView([25.285, 51.531], 10);
-    }
-    function clearMapLayers(){ markersLayer.clearLayers(); observersLayer.clearLayers(); schoolLayer.clearLayers(); }
 
-    // === Marker: Student (FA divIcon + popup منسّق) ===
+    function ensureMap(){
+      if (map) return;
+
+      map = L.map('map', {
+        zoomControl: true,
+        attributionControl: false,
+        minZoom: 2,
+
+        // تفعيل عجلة الماوس وحساسية مناسبة
+        scrollWheelZoom: true,
+        wheelDebounceTime: 10,
+        wheelPxPerZoomLevel: 30,
+
+        // اللمس والاختصارات
+        touchZoom: 'center',
+        doubleClickZoom: true,
+        boxZoom: true,
+        keyboard: true
+      });
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      // تأكيد التفاعل
+      map.dragging.enable();
+      map.scrollWheelZoom.enable();
+      map.touchZoom.enable();
+      map.doubleClickZoom.enable();
+      map.boxZoom.enable();
+      map.keyboard.enable();
+
+      // طبقات
+      markersLayer   = L.layerGroup().addTo(map);
+      observersLayer = L.layerGroup().addTo(map);
+      schoolLayer    = L.layerGroup().addTo(map);
+
+      // موضع ابتدائي فقط (بدون fitBounds تلقائي)
+      map.setView([25.285, 51.531], 10);
+
+      // لا نربط zoomend بـ renderMap حتى لا نكسر التكبير/التصغير
+      window.addEventListener('resize', () => { try { map.invalidateSize(false); } catch(e){} });
+      setTimeout(() => { try { map.invalidateSize(true); } catch(e){} }, 50);
+    }
+
+    function clearMapLayers(){
+      if (markersLayer) markersLayer.clearLayers();
+      if (observersLayer) observersLayer.clearLayers();
+      if (schoolLayer) schoolLayer.clearLayers();
+    }
+
+    // Student marker
     function addStudentMarker(stu){
       const p = parseAnyLocation(stu.location_text);
       const lat = parseFloat(stu.location_lat || p.lat);
       const lng = parseFloat(stu.location_lng || p.lng);
       if(Number.isNaN(lat) || Number.isNaN(lng)) return;
 
-      const color = busColor(stu.bus_no);
-      const icon = createFAIcon({ type:'student', fa:'fa-user-graduate', bg: color });
-
+      const icon = createCustomIcon({ type:'student', busNo:stu.bus_no });
       const m = L.marker([lat,lng], { icon });
 
       const content = `
@@ -700,11 +1813,18 @@
         </div>`;
       m.bindTooltip(`${stu.student_name} — باص ${stu.bus_no||'-'}`, {direction:'top', offset:[0,-10]});
       m.bindPopup(content);
+
+      // تركيز فقط عند الضغط
+      m.on('click', () => {
+        map.flyTo([lat, lng], Math.max(map.getZoom(), 15), { duration: 0.5 });
+        m.openPopup();
+      });
+
       markersLayer.addLayer(m);
       return [lat,lng];
     }
 
-    // === Marker: Observer (FA divIcon + popup) ===
+    // Observer marker
     function addObserverMarker(bus){
       let lat = parseFloat(bus.observer_lat);
       let lng = parseFloat(bus.observer_lng);
@@ -714,7 +1834,7 @@
       }
       if(Number.isNaN(lat) || Number.isNaN(lng)) return;
 
-      const icon = createFAIcon({ type:'observer', fa:'fa-user-shield', bg:'#94a3b8' });
+      const icon = createCustomIcon({ type:'observer', busNo:bus.bus_no });
       const m = L.marker([lat,lng], { icon });
 
       const content = `
@@ -733,18 +1853,24 @@
         </div>`;
       m.bindTooltip(`ملاحظ: ${bus.observer_name||'-'} — باص ${bus.bus_no||'-'}`, {direction:'top', offset:[0,-10]});
       m.bindPopup(content);
+
+      m.on('click', () => {
+        map.flyTo([lat, lng], Math.max(map.getZoom(), 15), { duration: 0.5 });
+        m.openPopup();
+      });
+
       observersLayer.addLayer(m);
       return [lat,lng];
     }
 
-    // === Marker: School (FA divIcon + popup) ===
+    // School marker
     function addSchoolMarker(){
       if(!state.school) return null;
       const lat = parseFloat(state.school.school_lat);
       const lng = parseFloat(state.school.school_lng);
       if(Number.isNaN(lat) || Number.isNaN(lng)) return null;
 
-      const icon = createFAIcon({ type:'school', fa:'fa-school', bg:'#f59e0b' });
+      const icon = createCustomIcon({ type:'school' });
       const m = L.marker([lat,lng], { icon });
 
       const content = `
@@ -760,13 +1886,23 @@
         </div>`;
       m.bindTooltip(`🏫 ${state.school.school_name||'المدرسة'}`, {direction:'top', offset:[0,-10]});
       m.bindPopup(content);
+
+      m.on('click', () => {
+        map.flyTo([lat, lng], Math.max(map.getZoom(), 15), { duration: 0.5 });
+        m.openPopup();
+      });
+
       schoolLayer.addLayer(m);
       return [lat,lng];
     }
 
-    function renderMap(){
-      ensureMap(); clearMapLayers();
-      const sel = qs('#busFilter'); const filter = sel ? sel.value : '';
+    // رسم الخريطة بدون أي fitBounds تلقائي
+    function renderMap({ fit = false } = {}){
+      ensureMap();
+      clearMapLayers();
+
+      const sel = qs('#busFilter');
+      const filter = sel ? sel.value : '';
       const pts = [];
 
       // الطلاب
@@ -778,16 +1914,21 @@
       toShow.forEach(s=>{ const p = addStudentMarker(s); if(p) pts.push(p); });
 
       // المدرسة
-      const schPt = addSchoolMarker(); if(schPt) pts.push(schPt);
+      const schPt = addSchoolMarker(); if (schPt) pts.push(schPt);
 
-      // ملاحظو الباصات
+      // الملاحظون
       state.buses
         .filter(b=>!filter || b.bus_no===filter)
         .forEach(b=>{ const p = addObserverMarker(b); if(p) pts.push(p); });
 
-      renderLegend(); renderBusFilter();
+      renderLegend();
+      renderBusFilter();
 
-      if(pts.length){ const bounds = L.latLngBounds(pts); map.fitBounds(bounds.pad(0.2)); } else { map.setView([25.285, 51.531], 10); }
+      // لا نعمل fitBounds تلقائيًا
+      if (fit && pts.length) {
+        const bounds = L.latLngBounds(pts);
+        map.fitBounds(bounds.pad(0.2), { animate: true });
+      }
     }
 
     // ===================== STUDENT FORM =====================
@@ -1080,7 +2221,7 @@
           school_location_text: qs('#schoolLocAny').value.trim()
         };
         state.school = await sbUpsertSchool(payload);
-        showAlert('تم حفظ إعداد المدرسة', 'success'); renderMap();
+        showAlert('تم حفظ إعداد المدرسة', 'success'); renderMap({fit:false});
       }catch(e){ showAlert('خطأ حفظ إعداد المدرسة: '+e.message, 'error'); }
     });
     qs('#btnClearSchool').addEventListener('click', ()=>{
@@ -1088,10 +2229,22 @@
       updateLinkPreview('#schoolLocAny','#schoolLat','#schoolLng','#schoolMapLink');
     });
 
-    // BOOTSTRAP
-    qs('#fitAll').addEventListener('click', renderMap);
-    qs('#refreshMap').addEventListener('click', reloadAll);
-    qs('#busFilter').addEventListener('change', renderMap);
+    // BOOTSTRAP + أزرار الخريطة
+    qs('#fitAll').addEventListener('click', ()=>{
+      ensureMap();
+      try { map.invalidateSize(true); } catch(e){}
+      renderMap({ fit: true }); // تركيز يدوي فقط
+    });
+    qs('#refreshMap').addEventListener('click', ()=>{
+      ensureMap();
+      try { map.invalidateSize(true); } catch(e){}
+      reloadAll();
+    });
+    qs('#busFilter').addEventListener('change', ()=>{
+      ensureMap();
+      try { map.invalidateSize(false); } catch(e){}
+      renderMap({ fit: false }); // لا تركيز تلقائي عند التصفية
+    });
 
     async function reloadAll(){
       state.buses = await sbSelectBuses();
@@ -1101,9 +2254,22 @@
       renderRows();
 
       state.school = await sbGetSchool();
-      renderLegend(); renderMap();
+      renderLegend(); renderMap({fit:false});
     }
-    async function bootstrap(){ const session = await requireAuth(); if(!session) return; await reloadAll(); }
+    async function bootstrap(){
+      const session = await requireAuth();
+      if(!session) return;
+
+      initTheme();
+      initTabs();
+      initCollapsibleSections();
+
+      await reloadAll();
+    }
+
+    // تبديل الثيم
+    qs('#themeToggle').addEventListener('click', toggleTheme);
+
     (async ()=>{ await bootstrap(); })();
   </script>
 </body>
