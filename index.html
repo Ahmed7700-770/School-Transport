@@ -37,13 +37,9 @@
     .btn{border:1px solid var(--border); background:#0f172a; color:var(--text); padding:9px 14px; border-radius:12px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s}
     .btn:hover{background:#1e293b}
     .btn.primary{background:linear-gradient(90deg,#22c55e,#16a34a); border:none}
-    .btn.primary:hover{background:linear-gradient(90deg,#16a34a,#15803d)}
     .btn.info{background:linear-gradient(90deg,#38bdf8,#06b6d4); border:none}
-    .btn.info:hover{background:linear-gradient(90deg,#06b6d4,#0891b2)}
     .btn.warn{background:linear-gradient(90deg,#f59e0b,#f97316); border:none}
-    .btn.warn:hover{background:linear-gradient(90deg,#f97316,#ea580c)}
     .btn.danger{background:linear-gradient(90deg,#ef4444,#dc2626); border:none}
-    .btn.danger:hover{background:linear-gradient(90deg,#dc2626,#b91c1c)}
     .btn:disabled{opacity:.6; cursor:not-allowed}
     .toolbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
     .table{width:100%; border-collapse:collapse; border:1px solid var(--border); border-radius:12px; overflow:auto}
@@ -72,6 +68,37 @@
     .auth-overlay{position:fixed; inset:0; background:linear-gradient(135deg,#0a1222,#07101a); display:flex; align-items:center; justify-content:center; z-index:999;}
     .auth-card{width:min(520px,94vw); background:#0b1220; border:1px solid var(--border); border-radius:20px; padding:22px; box-shadow:0 20px 60px #00000066}
     .auth-title{font-size:20px; margin-bottom:10px}
+
+    /* ===== Marker styles (Font Awesome divIcon) ===== */
+    .fa-marker{
+      position:relative; display:inline-flex; align-items:center; justify-content:center;
+      border-radius:50%; box-shadow:0 6px 16px #00000066;
+      border:2px solid #fff; background:var(--m-bg,#0ea5e9);
+      width:34px; height:34px; color:#fff; font-size:16px;
+    }
+    .fa-marker.bus{ background:var(--m-bg,#3b82f6); }
+    .fa-marker.student{ background:var(--m-bg,#22c55e); }
+    .fa-marker.observer{ background:var(--m-bg,#94a3b8); }
+    .fa-marker.school{ background:var(--m-bg,#f59e0b); }
+    .fa-marker .fa{ filter: drop-shadow(0 1px 1px #0008); }
+    .fa-marker.pin::after{
+      content:""; position:absolute; bottom:-6px; left:50%; transform:translateX(-50%);
+      width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #fff;
+    }
+
+    /* ===== منسقات نافذة البيانات (popup) ===== */
+    .leaflet-popup-content-wrapper { background:#0b1220; color:#e5e7eb; border:1px solid #1f2a44; border-radius:14px; }
+    .leaflet-popup-tip { background:#0b1220; }
+    .map-popup { min-width: 240px; }
+    .map-popup .title { font-weight:700; margin-bottom:6px; font-size:14px; }
+    .map-popup .meta { font-size:12px; color:#93c5fd; margin-bottom:6px; }
+    .map-popup .grid { display:grid; grid-template-columns: 1fr; gap:6px; font-size:13px; }
+    .map-popup .row { display:flex; align-items:center; gap:8px; }
+    .map-popup .key { color:#94a3b8; min-width:88px; }
+    .map-popup .value { color:#e5e7eb; }
+    .map-popup .actions { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+    .map-popup .btn-link { text-decoration:none; border:1px solid #1f2a44; padding:6px 10px; border-radius:999px; background:#0f172a; color:#e5e7eb; }
+    .map-popup .btn-link:hover { background:#1e293b; }
   </style>
 </head>
 <body>
@@ -97,17 +124,15 @@
         <button class="btn info" id="btnRegister"><i class="fas fa-user-plus"></i> إنشاء حساب</button>
         <button class="btn" id="btnLogout" style="margin-inline-start:auto"><i class="fas fa-door-open"></i> تسجيل الخروج</button>
       </div>
-      <div class="hint mt8">* بعد تسجيل الدخول سيتم تحميل بياناتك من Supabase. 
-        <br/>تأكد من إضافة رابط GitHub Pages ضمن Allowed Redirect URLs في إعدادات Auth.
-      </div>
+      <div class="hint mt8">* بعد تسجيل الدخول سيتم تحميل بياناتك من Supabase.</div>
     </div>
   </div>
 
   <header>
     <div class="container row" style="justify-content:space-between">
       <div>
-        <h1><i class="fas fa-bus"></i> نظام النقل المدرسي – إدارة الطلاب والباصات  </h1>
-        <div class="mini">متصل بـ Supabase – يدعم لصق روابط خرائط Google أو إحداثيات عشرية؛ ويعرض النقاط على الخريطة بحسب رقم الباص.</div>
+        <h1><i class="fas fa-bus"></i> نظام النقل المدرسي – إدارة الطلاب والباصات</h1>
+        <div class="mini">يدعم روابط خرائط Google أو lat,lng ويعرض نقاط الطلاب + المدرسة + ملاحظي الباصات.</div>
       </div>
       <div class="row">
         <button class="btn info" id="btnExport"><i class="fas fa-file-export"></i> تصدير CSV</button>
@@ -120,7 +145,44 @@
   </header>
 
   <main class="container grid" style="gap:20px" id="app" hidden>
-    <!-- نموذج الإدخال -->
+    <!-- إعداد المدرسة -->
+    <section class="card">
+      <div class="toolbar" style="justify-content:space-between">
+        <div class="row" style="gap:12px">
+          <span class="pill"><i class="fas fa-school"></i> إعداد المدرسة</span>
+          <span class="hint">احفظ اسم المدرسة وموقعها لتظهر نقطة خاصة على الخريطة.</span>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="btnSaveSchool"><i class="fas fa-save"></i> حفظ إعداد المدرسة</button>
+          <button class="btn" id="btnClearSchool"><i class="fas fa-eraser"></i> تفريغ</button>
+        </div>
+      </div>
+      <div class="grid grid-3 mt8">
+        <div>
+          <label><i class="fas fa-school-flag"></i> اسم المدرسة *</label>
+          <input id="schoolName" placeholder="مثال: مدرسة غرناطة الإعدادية للبنات" />
+        </div>
+        <div>
+          <label><i class="fas fa-map-pin"></i> لوكيشن المدرسة (رابط أو lat,lng)</label>
+          <input id="schoolLocAny" placeholder="25.286,51.533 أو رابط خرائط" />
+          <div class="row mt8">
+            <a id="schoolMapLink" class="btn" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> فتح في Google Maps</a>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label><i class="fas fa-map-marker-alt"></i> School Lat</label>
+            <input id="schoolLat" placeholder="25.286" />
+          </div>
+          <div>
+            <label><i class="fas fa-map-marker-alt"></i> School Lng</label>
+            <input id="schoolLng" placeholder="51.533" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- نموذج الطالب -->
     <section class="card">
       <div class="toolbar" style="justify-content:space-between">
         <div class="row" style="gap:12px">
@@ -159,7 +221,7 @@
               </div>
             </div>
             <div>
-              <label><i class="fas fa-map-pin"></i> لوكيشن (رابط خرائط أو lat,lng) – اختياري</label>
+              <label><i class="fas fa-map-pin"></i> لوكيشن (رابط أو lat,lng) – اختياري</label>
               <input id="locAny" placeholder="25.286,51.533 أو رابط خرائط" />
               <div class="row mt8">
                 <a id="mapLink" class="btn" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> فتح في Google Maps</a>
@@ -191,7 +253,7 @@
           <div class="card" style="background:#0a1322">
             <div class="row" style="justify-content:space-between; margin-bottom:8px">
               <div class="pill"><i class="fas fa-bus"></i> ربط برقم الباص</div>
-              <button class="btn info" id="btnManageBuses"><i class="fas fa-cog"></i> إدارة قائمة الباصات</button>
+              <a class="btn info" href="#bus-admin"><i class="fas fa-cog"></i> إدارة قائمة الباصات</a>
             </div>
             <div class="grid grid-2">
               <div>
@@ -224,12 +286,12 @@
               </div>
             </div>
           </div>
-          <div class="hint">اللصق في خانة "لوكيشن" سيملأ الإحداثيات تلقائياً إن تركت Lat/Lng فارغين.</div>
+          <div class="hint">اللصق في خانة "لوكيشن" يملأ الإحداثيات تلقائيًا إذا كانت Lat/Lng فارغة.</div>
         </div>
       </div>
     </section>
 
-    <!-- الجدول -->
+    <!-- جدول الطلاب -->
     <section class="card">
       <div class="toolbar" style="justify-content:space-between">
         <div class="row" style="gap:8px">
@@ -267,29 +329,37 @@
     </section>
 
     <!-- إدارة الباصات -->
-    <section class="card">
+    <section class="card" id="bus-admin">
       <div class="pill"><i class="fas fa-cogs"></i> إدارة الباصات</div>
+
+      <!-- بطاقات -->
       <div class="grid grid-3 mt8" id="busManager"></div>
-      <div class="row mt8">
-        <input id="newBusNo" placeholder="رقم الباص بالمدرسة" />
-        <input id="newPlate" placeholder="رقم اللوحة" />
-        <select id="newCapacity">
-          <option value="">حجم الباص</option>
-          <option>12</option>
-          <option>28</option>
-          <option>35</option>
-          <option>39</option>
+
+      <!-- نموذج إضافة/تعديل -->
+      <div class="row mt8" style="flex-wrap:wrap; gap:8px">
+        <input id="newBusNo" placeholder="رقم الباص *" />
+        <input id="newPlate" placeholder="رقم اللوحة *" />
+        <select id="newCapacity" style="min-width:120px">
+          <option value="">حجم الباص *</option>
+          <option>12</option><option>28</option><option>35</option><option>39</option>
         </select>
         <input id="newDriver" placeholder="اسم السائق" />
         <input id="newDriverPhone" placeholder="هاتف السائق" />
         <input id="newObserver" placeholder="اسم الملاحظ" />
         <input id="newObserverPhone" placeholder="هاتف الملاحظ" />
-        <button class="btn primary" id="addBus"><i class="fas fa-plus"></i> إضافة باص</button>
+        <!-- لوكيشن الملاحظ -->
+        <input id="newObserverLocAny" placeholder="لوكيشن الملاحظ (رابط أو lat,lng)" style="min-width:240px" />
+        <input id="newObserverLat" placeholder="Obs Lat" style="max-width:120px" />
+        <input id="newObserverLng" placeholder="Obs Lng" style="max-width:120px" />
+        <div class="row" style="gap:8px">
+          <button class="btn primary" id="addBus"><i class="fas fa-plus"></i> <span id="busSubmitLabel">إضافة باص</span></button>
+          <button class="btn" id="cancelBusEdit" style="display:none"><i class="fas fa-times"></i> إلغاء التعديل</button>
+        </div>
       </div>
-      <div class="hint">تعديل/حذف بطاقة الباص يتم من خلال الأزرار على كل بطاقة.</div>
+      <div class="hint">اضغط "تعديل" على بطاقة الباص لتعبئة الحقول أعلاه ثم "تحديث باص".</div>
     </section>
 
-    <!-- تبويب الخرائط -->
+    <!-- الخريطة -->
     <section class="card">
       <div class="toolbar" style="justify-content:space-between">
         <div class="row">
@@ -299,13 +369,13 @@
           <button class="btn" id="fitAll"><i class="fas fa-expand"></i> إظهار جميع النقاط</button>
           <button class="btn" id="refreshMap"><i class="fas fa-sync-alt"></i> تحديث</button>
         </div>
-        <div class="row"><span class="hint">كل باص بلون مختلف؛ وتمرير الماوس يُظهر اسم الطالب + رقم الباص.</span></div>
+        <div class="row"><span class="hint">تُعرض نقاط الطلاب (حسب الباص)، ونقطة المدرسة، ونقاط ملاحظي الباصات.</span></div>
       </div>
       <div id="map" class="mt8"></div>
       <div id="legend" class="legend"></div>
     </section>
 
-    <section class="footer">© 2025 – البيانات تُحفظ في حسابك على Supabase مع سياسات RLS.</section>
+    <section class="footer">© 2025 – البيانات تُحفظ في Supabase مع سياسات RLS.</section>
   </main>
 
   <!-- Alerts container -->
@@ -313,22 +383,14 @@
 
   <script>
     // ===================== CONFIG =====================
-    // ضع القيم من لوحة Supabase (Project Settings > API)
     const SUPABASE_URL ="https://sxaegfyfmjoyvccpipiz.supabase.co"; // <-- عدّل
     const SUPABASE_ANON_KEY ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4YWVnZnlmbWpveXZjY3BpcGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExMzIzMzUsImV4cCI6MjA3NjcwODMzNX0.IFw5sZXaXWVMEn1F5YXvu77FHHwIfG4GdFjTU49GMcw"; // <-- عدّل
 
-    // اسم المدرسة (اختياري لتجميع البيانات)
-    const SCHOOL_NAME = "مدرسة غرناطة الاعدادية للبنات";
-
-    // مفاتيح التخزين المؤقت المحلي (اختياري)
-    const SKEY = 'transport_students_cache_v1';
-
-    // Supabase client
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
 
-    // ===================== UI HELPERS =====================
+    // ===================== HELPERS =====================
     const qs = s => document.querySelector(s);
     const qsa = s => Array.from(document.querySelectorAll(s));
     function showAlert(message, type = 'info', duration = 4000) {
@@ -342,7 +404,6 @@
       if(duration>0){ setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(),300); }, duration); }
     }
 
-    // ===================== MAP HELPERS =====================
     function parseAnyLocation(input){
       const s = (input||'').trim();
       if(!s) return {lat:'', lng:'', text:''};
@@ -359,29 +420,45 @@
     function hashStr(str){ let h=0; for(let i=0;i<str.length;i++){ h=(h<<5)-h + str.charCodeAt(i); h|=0; } return Math.abs(h); }
     function busColor(busNo){ return busNo ? PALETTE[hashStr(busNo)%PALETTE.length] : '#9ca3af'; }
 
+    // ===== أيقونات ونوافذ منسّقة (FA + divIcon) =====
+    function createFAIcon({ type='student', fa='fa-user-graduate', bg, size=34 }) {
+      const classMap = { student:'student', observer:'observer', school:'school', bus:'bus' };
+      const className = `fa-marker pin ${classMap[type]||'student'}`;
+      const html = `<div class="${className}" style="${bg?`--m-bg:${bg};`:''} width:${size}px; height:${size}px">
+                      <i class="fa ${fa}"></i>
+                    </div>`;
+      return L.divIcon({
+        className: '',
+        html, iconSize: [size, size+6], iconAnchor: [size/2, size/2+6], popupAnchor: [0, -size/2]
+      });
+    }
+    function popupBtn(href, label, icon='fa-external-link-alt'){
+      return `<a class="btn-link" target="_blank" rel="noopener" href="${href}">
+                <i class="fa ${icon}"></i> ${label}
+              </a>`;
+    }
+    function mapLink(lat, lng){
+      return `https://maps.google.com/?q=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`;
+    }
+
     // ===================== AUTH =====================
     const authOverlay = qs('#auth');
     const appMain = qs('#app');
     const authStatus = qs('#authStatus');
-
     async function requireAuth(){
       const { data:{ session } } = await supabase.auth.getSession();
       if(session){ authStatus.textContent = `مسجل: ${session.user.email}`; authOverlay.style.display='none'; appMain.hidden=false; return session; }
       authOverlay.style.display='flex'; appMain.hidden=true; return null;
     }
-
     qs('#btnOpenAuth').addEventListener('click', ()=>{ authOverlay.style.display='flex'; });
-
     qs('#btnLogin').addEventListener('click', async ()=>{
       const email = qs('#authEmail').value.trim();
       const password = qs('#authPassword').value.trim();
       if(!email||!password) return showAlert('أدخل البريد وكلمة المرور', 'error');
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if(error){ showAlert('فشل تسجيل الدخول: '+error.message, 'error'); return; }
-      showAlert('تم تسجيل الدخول', 'success');
-      await bootstrap();
+      showAlert('تم تسجيل الدخول', 'success'); await bootstrap();
     });
-
     qs('#btnRegister').addEventListener('click', async ()=>{
       const email = qs('#authEmail').value.trim();
       const password = qs('#authPassword').value.trim();
@@ -390,31 +467,21 @@
       if(error){ showAlert('فشل إنشاء الحساب: '+error.message, 'error'); return; }
       showAlert('تم إنشاء الحساب. تحقق من بريدك إذا طُلب تأكيد.', 'success');
     });
+    qs('#btnLogout').addEventListener('click', async ()=>{ await supabase.auth.signOut(); showAlert('تم تسجيل الخروج', 'success'); authOverlay.style.display='flex'; appMain.hidden=true; });
 
-    qs('#btnLogout').addEventListener('click', async ()=>{
-      await supabase.auth.signOut();
-      showAlert('تم تسجيل الخروج', 'success');
-      authOverlay.style.display='flex'; appMain.hidden=true;
-    });
-
-    // ===================== DATA ACCESS (Supabase) =====================
-    // جداول: buses, students (مع profile_id = auth.uid())
-
+    // ===================== DATA ACCESS =====================
     async function sbUser(){ const { data:{ session } } = await supabase.auth.getSession(); return session?.user || null; }
 
+    // buses
     async function sbSelectBuses(){
       const user = await sbUser(); if(!user) return [];
-      const { data, error } = await supabase
-        .from('buses')
-        .select('*')
-        .eq('profile_id', user.id)
-        .order('bus_no', { ascending:true });
+      const { data, error } = await supabase.from('buses').select('*').eq('profile_id', user.id).order('bus_no', { ascending:true });
       if(error){ showAlert('خطأ تحميل الباصات: '+error.message, 'error'); return []; }
       return data||[];
     }
     async function sbInsertBus(bus){
       const user = await sbUser(); if(!user) return;
-      const payload = { ...bus, profile_id: user.id, school_name: SCHOOL_NAME };
+      const payload = { ...bus, profile_id: user.id };
       const { error } = await supabase.from('buses').insert(payload);
       if(error) throw error;
     }
@@ -427,19 +494,16 @@
       if(error) throw error;
     }
 
+    // students
     async function sbSelectStudents(){
       const user = await sbUser(); if(!user) return [];
-      const { data, error } = await supabase
-        .from('students')
-        .select('*')
-        .eq('profile_id', user.id)
-        .order('created_at', { ascending:true });
+      const { data, error } = await supabase.from('students').select('*').eq('profile_id', user.id).order('created_at', { ascending:true });
       if(error){ showAlert('خطأ تحميل الطلاب: '+error.message, 'error'); return []; }
       return data||[];
     }
     async function sbInsertStudent(stu){
       const user = await sbUser(); if(!user) return;
-      const payload = { ...stu, profile_id: user.id, school_name: SCHOOL_NAME };
+      const payload = { ...stu, profile_id: user.id };
       const { error } = await supabase.from('students').insert(payload);
       if(error) throw error;
     }
@@ -456,28 +520,45 @@
       await supabase.from('students').delete().eq('profile_id', user.id);
     }
 
-    // ===================== STATE =====================
-    let state = { buses: [], students: [], editingStudentId: null };
+    // school_settings
+    async function sbGetSchool(){
+      const user = await sbUser(); if(!user) return null;
+      const { data, error } = await supabase.from('school_settings').select('*').eq('profile_id', user.id).single();
+      if(error && error.code!=='PGRST116'){ showAlert('خطأ تحميل إعداد المدرسة: '+error.message, 'error'); return null; }
+      return data||null;
+    }
+    async function sbUpsertSchool(obj){
+      const user = await sbUser(); if(!user) return;
+      const { data, error } = await supabase.from('school_settings').upsert(
+        [{...obj, profile_id: user.id}],
+        { onConflict: 'profile_id' }
+      ).select().single();
+      if(error) throw error;
+      return data;
+    }
 
-    // ===================== ORIGINAL HELPERS (adapted) =====================
-    function updateMapLink(){
-      const lat = qs('#lat').value.trim();
-      const lng = qs('#lng').value.trim();
-      const any = qs('#locAny').value.trim();
-      const a = qs('#mapLink');
+    // ===================== STATE =====================
+    let state = { buses: [], students: [], editingStudentId: null, editingBusId: null, school: null };
+
+    // ===================== UI HELPERS =====================
+    function updateLinkPreview(inputSel, latSel, lngSel, aSel){
+      const lat = qs(latSel).value.trim();
+      const lng = qs(lngSel).value.trim();
+      const any = qs(inputSel).value.trim();
+      const a = qs(aSel);
       let url = '#';
       if(lat && lng){ url = `https://maps.google.com/?q=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`; }
       else if(any){ url = mapUrlFrom(any); }
       a.href = url; a.textContent = (url==='#') ? '—' : 'فتح في Google Maps';
     }
-    function hydrateLatLngFromAny(){
-      const any = qs('#locAny').value.trim();
+    function hydrateLatLngFromAny(inputSel, latSel, lngSel){
+      const any = qs(inputSel).value.trim();
       const p = parseAnyLocation(any);
-      const latEl = qs('#lat'), lngEl = qs('#lng');
+      const latEl = qs(latSel), lngEl = qs(lngSel);
       if(p.lat && p.lng){ if(!latEl.value) latEl.value = p.lat; if(!lngEl.value) lngEl.value = p.lng; }
-      updateMapLink();
     }
 
+    // ===================== RENDERERS =====================
     function renderBusOptions(){
       const sel = qs('#busNo');
       const current = sel.value;
@@ -509,11 +590,11 @@
           <div class="mini"><i class="fas fa-car"></i> لوحة: ${b.plate_no||'-'} • الحجم: ${b.capacity||'-'}</div>
           <div class="mini"><i class="fas fa-user-tie"></i> سائق: ${b.driver_name||'-'} – ${b.driver_phone||'-'}</div>
           <div class="mini"><i class="fas fa-user-check"></i> ملاحظ: ${b.observer_name||'-'} – ${b.observer_phone||'-'}</div>
+          <div class="mini"><i class="fas fa-map-marker-alt"></i> لوكيشن الملاحظ: ${b.observer_location_text || (b.observer_lat&&b.observer_lng? (b.observer_lat+','+b.observer_lng): '-')}</div>
         `;
         host.appendChild(d);
       });
     }
-
     function renderBusFilter(){
       const sel = qs('#busFilter'); const cur = sel.value;
       sel.innerHTML = '<option value="">كل الباصات</option>' + state.buses.map(b=>`<option value="${b.bus_no}">${b.bus_no}</option>`).join('');
@@ -529,9 +610,19 @@
         div.innerHTML = `<span class="swatch" style="background:${color}"></span> <span>${b.bus_no}</span>`;
         legend.appendChild(div);
       });
+      if(state.school){ 
+        const div = document.createElement('div'); div.className='item';
+        div.innerHTML = `<span class="swatch" style="background:#f59e0b"></span> <span>المدرسة</span>`;
+        legend.appendChild(div);
+      }
+      if(state.buses.some(b=> (b.observer_lat && b.observer_lng) || b.observer_location_text )){
+        const div = document.createElement('div'); div.className='item';
+        div.innerHTML = `<span class="swatch" style="background:#94a3b8"></span> <span>ملاحظو الباصات</span>`;
+        legend.appendChild(div);
+      }
     }
 
-    // ========== STUDENTS TABLE RENDER ==========
+    // جدول الطلاب
     function renderRows(){
       const body = qs('#rows'); body.innerHTML = '';
       const q = (qs('#q').value||'').trim().toLowerCase();
@@ -568,46 +659,140 @@
       });
     }
 
-    // ========== MAP ==========
-    let map, markersLayer;
+    // الخريطة
+    let map, markersLayer, observersLayer, schoolLayer;
     function ensureMap(){
       if(map) return;
       map = L.map('map', { zoomControl: true, attributionControl:false, minZoom: 2 });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
       markersLayer = L.layerGroup().addTo(map);
+      observersLayer = L.layerGroup().addTo(map);
+      schoolLayer = L.layerGroup().addTo(map);
       map.setView([25.285, 51.531], 10);
     }
-    function clearMarkers(){ markersLayer && markersLayer.clearLayers(); }
+    function clearMapLayers(){ markersLayer.clearLayers(); observersLayer.clearLayers(); schoolLayer.clearLayers(); }
+
+    // === Marker: Student (FA divIcon + popup منسّق) ===
     function addStudentMarker(stu){
       const p = parseAnyLocation(stu.location_text);
       const lat = parseFloat(stu.location_lat || p.lat);
       const lng = parseFloat(stu.location_lng || p.lng);
       if(Number.isNaN(lat) || Number.isNaN(lng)) return;
+
       const color = busColor(stu.bus_no);
-      const marker = L.circleMarker([lat,lng], { radius:8, color:color, weight:2, fillColor:color, fillOpacity:0.65 });
-      marker.bindTooltip(`${stu.student_name} — باص ${stu.bus_no||'-'}`, {direction:'top', offset:[0,-6]});
-      const link = `https://maps.google.com/?q=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`;
-      marker.bindPopup(`<div><strong>${stu.student_name}</strong></div><div class="mini">باص: ${stu.bus_no||'-'}</div><div class="row" style="margin-top:6px"><a class="btn" target="_blank" rel="noopener" href="${link}"><i class="fas fa-external-link-alt"></i> فتح في الخرائط</a></div>`);
-      markersLayer.addLayer(marker);
-      return marker;
+      const icon = createFAIcon({ type:'student', fa:'fa-user-graduate', bg: color });
+
+      const m = L.marker([lat,lng], { icon });
+
+      const content = `
+        <div class="map-popup">
+          <div class="title"><i class="fa fa-user-graduate"></i> ${stu.student_name||'—'}</div>
+          <div class="meta">باص: <strong>${stu.bus_no||'-'}</strong></div>
+          <div class="grid">
+            <div class="row"><span class="key"><i class="fa fa-user-shield"></i> ولي الأمر</span><span class="value">${stu.guardian_name||'-'}</span></div>
+            <div class="row"><span class="key"><i class="fa fa-phone"></i> هاتف</span><span class="value">${stu.guardian_phone||'-'}</span></div>
+            <div class="row"><span class="key"><i class="fa fa-id-card"></i> الرقم الشخصي</span><span class="value">${stu.personal_number||'-'}</span></div>
+            <div class="row"><span class="key"><i class="fa fa-sticky-note"></i> ملاحظة</span><span class="value">${stu.bus_note||'-'}</span></div>
+          </div>
+          <div class="actions">
+            ${popupBtn(mapLink(lat,lng), 'فتح في الخرائط')}
+          </div>
+        </div>`;
+      m.bindTooltip(`${stu.student_name} — باص ${stu.bus_no||'-'}`, {direction:'top', offset:[0,-10]});
+      m.bindPopup(content);
+      markersLayer.addLayer(m);
+      return [lat,lng];
     }
+
+    // === Marker: Observer (FA divIcon + popup) ===
+    function addObserverMarker(bus){
+      let lat = parseFloat(bus.observer_lat);
+      let lng = parseFloat(bus.observer_lng);
+      if((Number.isNaN(lat) || Number.isNaN(lng)) && bus.observer_location_text){
+        const p = parseAnyLocation(bus.observer_location_text);
+        lat = parseFloat(p.lat); lng = parseFloat(p.lng);
+      }
+      if(Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+      const icon = createFAIcon({ type:'observer', fa:'fa-user-shield', bg:'#94a3b8' });
+      const m = L.marker([lat,lng], { icon });
+
+      const content = `
+        <div class="map-popup">
+          <div class="title"><i class="fa fa-user-shield"></i> ${bus.observer_name||'ملاحظ باص'}</div>
+          <div class="meta">باص: <strong>${bus.bus_no||'-'}</strong></div>
+          <div class="grid">
+            <div class="row"><span class="key"><i class="fa fa-phone"></i> هاتف</span><span class="value">${bus.observer_phone||'-'}</span></div>
+            <div class="row"><span class="key"><i class="fa fa-user-tie"></i> السائق</span><span class="value">${bus.driver_name||'-'} ${bus.driver_phone?('— '+bus.driver_phone):''}</span></div>
+            <div class="row"><span class="key"><i class="fa fa-car"></i> اللوحة</span><span class="value">${bus.plate_no||'-'}</span></div>
+            <div class="row"><span class="key"><i class="fa fa-users"></i> السعة</span><span class="value">${bus.capacity||'-'}</span></div>
+          </div>
+          <div class="actions">
+            ${popupBtn(mapLink(lat,lng), 'فتح في الخرائط')}
+          </div>
+        </div>`;
+      m.bindTooltip(`ملاحظ: ${bus.observer_name||'-'} — باص ${bus.bus_no||'-'}`, {direction:'top', offset:[0,-10]});
+      m.bindPopup(content);
+      observersLayer.addLayer(m);
+      return [lat,lng];
+    }
+
+    // === Marker: School (FA divIcon + popup) ===
+    function addSchoolMarker(){
+      if(!state.school) return null;
+      const lat = parseFloat(state.school.school_lat);
+      const lng = parseFloat(state.school.school_lng);
+      if(Number.isNaN(lat) || Number.isNaN(lng)) return null;
+
+      const icon = createFAIcon({ type:'school', fa:'fa-school', bg:'#f59e0b' });
+      const m = L.marker([lat,lng], { icon });
+
+      const content = `
+        <div class="map-popup">
+          <div class="title"><i class="fa fa-school"></i> ${state.school.school_name||'المدرسة'}</div>
+          <div class="grid">
+            <div class="row"><span class="key"><i class="fa fa-location-dot"></i> الإحداثيات</span><span class="value">${lat.toFixed(6)}, ${lng.toFixed(6)}</span></div>
+            ${state.school.school_location_text ? `<div class="row"><span class="key"><i class="fa fa-map-pin"></i> المصدر</span><span class="value">${state.school.school_location_text}</span></div>` : ''}
+          </div>
+          <div class="actions">
+            ${popupBtn(mapLink(lat,lng), 'فتح في الخرائط')}
+          </div>
+        </div>`;
+      m.bindTooltip(`🏫 ${state.school.school_name||'المدرسة'}`, {direction:'top', offset:[0,-10]});
+      m.bindPopup(content);
+      schoolLayer.addLayer(m);
+      return [lat,lng];
+    }
+
     function renderMap(){
-      ensureMap(); clearMarkers();
+      ensureMap(); clearMapLayers();
       const sel = qs('#busFilter'); const filter = sel ? sel.value : '';
+      const pts = [];
+
+      // الطلاب
       const toShow = state.students.filter(s=>{
         const p = parseAnyLocation(s.location_text);
         const hasPoint = (s.location_lat && s.location_lng) || (p.lat && p.lng);
         return hasPoint && (!filter || s.bus_no === filter);
       });
-      const pts = [];
-      toShow.forEach(s=>{ const m = addStudentMarker(s); if(m){ const p = parseAnyLocation(s.location_text); const lat = parseFloat(s.location_lat || p.lat); const lng = parseFloat(s.location_lng || p.lng); pts.push([lat,lng]); } });
+      toShow.forEach(s=>{ const p = addStudentMarker(s); if(p) pts.push(p); });
+
+      // المدرسة
+      const schPt = addSchoolMarker(); if(schPt) pts.push(schPt);
+
+      // ملاحظو الباصات
+      state.buses
+        .filter(b=>!filter || b.bus_no===filter)
+        .forEach(b=>{ const p = addObserverMarker(b); if(p) pts.push(p); });
+
       renderLegend(); renderBusFilter();
+
       if(pts.length){ const bounds = L.latLngBounds(pts); map.fitBounds(bounds.pad(0.2)); } else { map.setView([25.285, 51.531], 10); }
     }
 
-    // ========== FORM VALIDATION ==========
+    // ===================== STUDENT FORM =====================
     function requiredCheck(el){ if(!el) return false; const ok = !!el.value.trim(); el.classList.toggle('required', !ok); return ok; }
-    function validate(){
+    function validateStudent(){
       const reqs = ['#studentName','#guardianName','#guardianPhone','#personalNo','#busNo'];
       const latOk = !!qs('#lat').value.trim();
       const lngOk = !!qs('#lng').value.trim();
@@ -618,8 +803,7 @@
       qs('#locAny').classList.remove('required');
       return basic;
     }
-
-    function getForm(){
+    function getStudentForm(){
       let lat = qs('#lat').value.trim();
       let lng = qs('#lng').value.trim();
       if(!lat || !lng){ const p = parseAnyLocation(qs('#locAny').value); lat = lat||p.lat; lng = lng||p.lng; }
@@ -628,8 +812,8 @@
         grade: qs('#grade').value.trim(),
         class: qs('#klass').value.trim(),
         location_text: qs('#locAny').value.trim(),
-        location_lat: lat,
-        location_lng: lng,
+        location_lat: lat || null,
+        location_lng: lng || null,
         guardian_name: qs('#guardianName').value.trim(),
         guardian_phone: qs('#guardianPhone').value.trim(),
         personal_number: qs('#personalNo').value.trim(),
@@ -643,7 +827,7 @@
         date_added: new Date().toISOString().slice(0,10),
       }
     }
-    function setForm(o){
+    function setStudentForm(o){
       qs('#studentName').value = o.student_name||'';
       qs('#grade').value = o.grade||'';
       qs('#klass').value = o.class||'';
@@ -656,77 +840,116 @@
       qs('#busNo').value = o.bus_no||''; updateBusAuto();
       qs('#busNote').value = o.bus_note||'';
       qs('#status').value = o.status||'Active';
-      updateMapLink();
+      updateLinkPreview('#locAny','#lat','#lng','#mapLink');
     }
-    function clearForm(){ setForm({}); state.editingStudentId=null; qsa('.required').forEach(e=>e.classList.remove('required')); }
-
-    async function addOrUpdate(){
-      hydrateLatLngFromAny();
-      if(!validate()) return showAlert('أكمل الحقول المطلوبة (*) أو أدخل لوكيشن صالح.', 'error');
-      const obj = getForm();
+    function clearStudentForm(){ setStudentForm({}); state.editingStudentId=null; qsa('.required').forEach(e=>e.classList.remove('required')); }
+    async function addOrUpdateStudent(){
+      hydrateLatLngFromAny('#locAny','#lat','#lng');
+      if(!validateStudent()) return showAlert('أكمل الحقول المطلوبة (*) أو أدخل لوكيشن صالح.', 'error');
+      const obj = getStudentForm();
       try{
         if(!state.editingStudentId){ await sbInsertStudent(obj); showAlert('تم إضافة الطالب بنجاح', 'success'); }
         else { await sbUpdateStudent(state.editingStudentId, obj); showAlert('تم تحديث بيانات الطالب', 'success'); }
-        clearForm(); await reloadAll();
+        clearStudentForm(); await reloadAll();
       }catch(e){ showAlert('خطأ في الحفظ: '+e.message, 'error'); }
     }
 
-    // ========== EVENTS ==========
+    // ===================== BUS FORM =====================
+    function fillBusForm(b){
+      qs('#newBusNo').value = b.bus_no||'';
+      qs('#newPlate').value = b.plate_no||'';
+      qs('#newCapacity').value = b.capacity||'';
+      qs('#newDriver').value = b.driver_name||'';
+      qs('#newDriverPhone').value = b.driver_phone||'';
+      qs('#newObserver').value = b.observer_name||'';
+      qs('#newObserverPhone').value = b.observer_phone||'';
+      qs('#newObserverLocAny').value = b.observer_location_text||'';
+      qs('#newObserverLat').value = b.observer_lat||'';
+      qs('#newObserverLng').value = b.observer_lng||'';
+      qs('#busSubmitLabel').textContent = 'تحديث باص';
+      qs('#cancelBusEdit').style.display = '';
+    }
+    function clearBusForm(){
+      ['#newBusNo','#newPlate','#newCapacity','#newDriver','#newDriverPhone','#newObserver','#newObserverPhone','#newObserverLocAny','#newObserverLat','#newObserverLng'].forEach(s=>qs(s).value='');
+      state.editingBusId = null;
+      qs('#busSubmitLabel').textContent = 'إضافة باص';
+      qs('#cancelBusEdit').style.display = 'none';
+    }
+    function getBusForm(){
+      let lat = qs('#newObserverLat').value.trim();
+      let lng = qs('#newObserverLng').value.trim();
+      if(!lat || !lng){
+        const p = parseAnyLocation(qs('#newObserverLocAny').value);
+        lat = lat||p.lat; lng = lng||p.lng;
+      }
+      return {
+        bus_no: qs('#newBusNo').value.trim(),
+        plate_no: qs('#newPlate').value.trim(),
+        capacity: Number(qs('#newCapacity').value.trim()) || qs('#newCapacity').value.trim(),
+        driver_name: qs('#newDriver').value.trim(),
+        driver_phone: qs('#newDriverPhone').value.trim(),
+        observer_name: qs('#newObserver').value.trim(),
+        observer_phone: qs('#newObserverPhone').value.trim(),
+        observer_location_text: qs('#newObserverLocAny').value.trim(),
+        observer_lat: lat || null,
+        observer_lng: lng || null
+      }
+    }
+
+    // ===================== EVENTS =====================
     document.addEventListener('click', async (e)=>{
       const editId = e.target.getAttribute('data-edit');
       const delId  = e.target.getAttribute('data-del');
       const bedit  = e.target.getAttribute('data-bedit');
       const bdel   = e.target.getAttribute('data-bdel');
 
-      if(editId){ const row = state.students.find(r=>String(r.id)===String(editId)); if(row){ state.editingStudentId = row.id; setForm(row); window.scrollTo({top:0,behavior:'smooth'}); } }
-      if(delId){ if(confirm('تأكيد حذف السجل؟')){ try{ await sbDeleteStudent(delId); await reloadAll(); showAlert('تم حذف الطالب', 'success'); }catch(e){ showAlert('خطأ الحذف: '+e.message, 'error'); } } }
+      if(editId){
+        const row = state.students.find(r=>String(r.id)===String(editId));
+        if(row){ state.editingStudentId = row.id; setStudentForm(row); window.scrollTo({top:0,behavior:'smooth'}); }
+      }
+      if(delId){
+        if(confirm('تأكيد حذف السجل؟')){
+          try{ await sbDeleteStudent(delId); await reloadAll(); showAlert('تم حذف الطالب', 'success'); }
+          catch(e){ showAlert('خطأ الحذف: '+e.message, 'error'); }
+        }
+      }
 
       if(bedit){
-        const b = state.buses.find(x=>String(x.id)===String(bedit));
-        if(!b) return;
-        const bus_no = prompt('رقم الباص', b.bus_no) || b.bus_no;
-        const plate_no = prompt('رقم اللوحة', b.plate_no||'') || b.plate_no||'';
-        const capacity = prompt('الحجم (12/28/35/39)', b.capacity||'') || b.capacity||'';
-        const driver_name = prompt('اسم السائق', b.driver_name||'') || b.driver_name||'';
-        const driver_phone = prompt('هاتف السائق', b.driver_phone||'') || b.driver_phone||'';
-        const observer_name = prompt('اسم الملاحظ', b.observer_name||'') || b.observer_name||'';
-        const observer_phone = prompt('هاتف الملاحظ', b.observer_phone||'') || b.observer_phone||'';
-        try{ await sbUpdateBus(b.id, { bus_no, plate_no, capacity: Number(capacity)||capacity, driver_name, driver_phone, observer_name, observer_phone }); showAlert('تم تحديث الباص', 'success'); await reloadAll(); }catch(e){ showAlert('خطأ: '+e.message, 'error'); }
+        const b = state.buses.find(x=>String(x.id)===String(bedit)); if(!b) return;
+        state.editingBusId = b.id; fillBusForm(b);
+        showAlert('تم تحميل بيانات الباص للتعديل', 'info', 2500);
       }
-      if(bdel){ if(confirm('حذف الباص؟')){ try{ await sbDeleteBus(bdel); await reloadAll(); showAlert('تم حذف الباص', 'success'); }catch(e){ showAlert('خطأ: '+e.message, 'error'); } } }
+      if(bdel){
+        if(confirm('حذف الباص؟')){
+          try{ await sbDeleteBus(bdel); await reloadAll(); showAlert('تم حذف الباص', 'success'); clearBusForm(); }
+          catch(e){ showAlert('خطأ: '+e.message, 'error'); }
+        }
+      }
     });
 
-    qs('#addBus').addEventListener('click', async ()=>{
-      const bus_no = qs('#newBusNo').value.trim();
-      const plate_no = qs('#newPlate').value.trim();
-      const capacity = qs('#newCapacity').value.trim();
-      const driver_name = qs('#newDriver').value.trim();
-      const driver_phone = qs('#newDriverPhone').value.trim();
-      const observer_name = qs('#newObserver').value.trim();
-      const observer_phone = qs('#newObserverPhone').value.trim();
-      if(!bus_no) return showAlert('أدخل رقم الباص', 'error');
-      if(!plate_no) return showAlert('أدخل رقم اللوحة', 'error');
-      if(!capacity) return showAlert('اختر حجم الباص', 'error');
-      try{
-        await sbInsertBus({ bus_no, plate_no, capacity: Number(capacity)||capacity, driver_name, driver_phone, observer_name, observer_phone });
-        ['#newBusNo','#newPlate','#newCapacity','#newDriver','#newDriverPhone','#newObserver','#newObserverPhone'].forEach(s=>qs(s).value='');
-        await reloadAll();
-        showAlert('تم إضافة الباص', 'success');
-      }catch(e){ showAlert('خطأ: '+e.message, 'error'); }
-    });
-
-    qs('#btnAdd').addEventListener('click', addOrUpdate);
-    qs('#btnReset').addEventListener('click', clearForm);
-    qsa('#studentName,#lat,#lng,#guardianName,#guardianPhone,#personalNo').forEach(el=>{ el.addEventListener('input', ()=>{ requiredCheck(el); updateMapLink(); }); });
-    qs('#locAny').addEventListener('input', hydrateLatLngFromAny);
-    qs('#busNo').addEventListener('change', ()=>{ updateBusAuto(); validate(); });
+    // أزرار الطالب
+    qs('#btnAdd').addEventListener('click', addOrUpdateStudent);
+    qs('#btnReset').addEventListener('click', clearStudentForm);
+    qsa('#studentName,#lat,#lng,#guardianName,#guardianPhone,#personalNo').forEach(el=>{ el.addEventListener('input', ()=>{ requiredCheck(el); updateLinkPreview('#locAny','#lat','#lng','#mapLink'); }); });
+    qs('#locAny').addEventListener('input', ()=>{ hydrateLatLngFromAny('#locAny','#lat','#lng'); updateLinkPreview('#locAny','#lat','#lng','#mapLink'); });
+    qs('#busNo').addEventListener('change', ()=>{ updateBusAuto(); validateStudent(); });
     qs('#q').addEventListener('input', ()=>{ renderRows(); });
 
-    qs('#btnClearAll').addEventListener('click', async ()=>{
-      if(confirm('مسح جميع سجلات الطلاب من حسابك؟')){ await sbDeleteAll(); await reloadAll(); showAlert('تم مسح جميع البيانات', 'success'); }
+    // أزرار الباص
+    qs('#addBus').addEventListener('click', async ()=>{
+      const bus = getBusForm();
+      if(!bus.bus_no) return showAlert('أدخل رقم الباص', 'error');
+      if(!bus.plate_no) return showAlert('أدخل رقم اللوحة', 'error');
+      if(!bus.capacity) return showAlert('اختر حجم الباص', 'error');
+      try{
+        if(!state.editingBusId){ await sbInsertBus(bus); showAlert('تم إضافة الباص', 'success'); }
+        else { await sbUpdateBus(state.editingBusId, bus); showAlert('تم تحديث الباص', 'success'); }
+        clearBusForm(); await reloadAll();
+      }catch(e){ showAlert('خطأ: '+e.message, 'error'); }
     });
+    qs('#cancelBusEdit').addEventListener('click', ()=>{ clearBusForm(); });
 
-    // Export (filtered / all / by bus)
+    // CSV
     const EXPORT_HEADERS = [
       {key:'student_name',     title:'اسم الطالب'},
       {key:'location_text',    title:'الموقع (نص)'},
@@ -766,7 +989,6 @@
       });
       return lines.join('\n');
     }
-
     qs('#btnExport').addEventListener('click', ()=>{
       const data = getFilteredStudents(); if(!data.length) return showAlert('لا توجد بيانات للتصدير', 'error');
       const csv = toCSVOrdered(data); const BOM = '\uFEFF';
@@ -781,7 +1003,6 @@
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'students_export_all.csv'; a.click();
       showAlert('تم تصدير جميع البيانات', 'success');
     });
-
     qs('#btnExportBus').addEventListener('click', ()=>{
       const sel = qs('#busFilter'); const bus = sel.value.trim(); if(!bus) return showAlert('اختر رقم باص أولاً', 'error');
       const data = state.students.filter(s=>s.bus_no===bus); if(!data.length) return showAlert('لا توجد سجلات لهذا الباص', 'error');
@@ -790,11 +1011,7 @@
       showAlert(`تم تصدير بيانات الباص ${bus}`, 'success');
     });
 
-    qs('#fitAll').addEventListener('click', renderMap);
-    qs('#refreshMap').addEventListener('click', reloadAll);
-    qs('#busFilter').addEventListener('change', renderMap);
-
-    // ===== Import CSV (upsert into DB) =====
+    // استيراد CSV
     function fromCSV(text){
       const headerMap = {
         'اسم الطالب':'student_name', 'Student_Name':'student_name',
@@ -834,7 +1051,6 @@
       });
       return out;
     }
-
     qs('#fileImport').addEventListener('change', async (e)=>{
       const file = e.target.files?.[0]; if(!file) return;
       try{
@@ -847,27 +1063,48 @@
       e.target.value = '';
     });
 
-    // ========== BOOTSTRAP ==========
+    // المدرسة: حقول وأزرار
+    qs('#schoolLocAny').addEventListener('input', ()=>{ hydrateLatLngFromAny('#schoolLocAny','#schoolLat','#schoolLng'); updateLinkPreview('#schoolLocAny','#schoolLat','#schoolLng','#schoolMapLink'); });
+    qsa('#schoolName,#schoolLat,#schoolLng').forEach(el=> el.addEventListener('input', ()=> updateLinkPreview('#schoolLocAny','#schoolLat','#schoolLng','#schoolMapLink') ));
+    qs('#btnSaveSchool').addEventListener('click', async ()=>{
+      const name = qs('#schoolName').value.trim();
+      let lat = qs('#schoolLat').value.trim();
+      let lng = qs('#schoolLng').value.trim();
+      if(!lat || !lng){ const p = parseAnyLocation(qs('#schoolLocAny').value); lat = lat||p.lat; lng = lng||p.lng; }
+      if(!name || !lat || !lng){ return showAlert('يرجى إدخال اسم المدرسة وموقع صحيح', 'error'); }
+      try{
+        const payload = {
+          school_name: name,
+          school_lat: Number(lat),
+          school_lng: Number(lng),
+          school_location_text: qs('#schoolLocAny').value.trim()
+        };
+        state.school = await sbUpsertSchool(payload);
+        showAlert('تم حفظ إعداد المدرسة', 'success'); renderMap();
+      }catch(e){ showAlert('خطأ حفظ إعداد المدرسة: '+e.message, 'error'); }
+    });
+    qs('#btnClearSchool').addEventListener('click', ()=>{
+      qs('#schoolName').value=''; qs('#schoolLocAny').value=''; qs('#schoolLat').value=''; qs('#schoolLng').value='';
+      updateLinkPreview('#schoolLocAny','#schoolLat','#schoolLng','#schoolMapLink');
+    });
+
+    // BOOTSTRAP
+    qs('#fitAll').addEventListener('click', renderMap);
+    qs('#refreshMap').addEventListener('click', reloadAll);
+    qs('#busFilter').addEventListener('change', renderMap);
+
     async function reloadAll(){
-      const buses = await sbSelectBuses();
-      state.buses = buses;
+      state.buses = await sbSelectBuses();
       renderBusOptions(); renderBusManager(); renderBusFilter();
 
-      const studs = await sbSelectStudents();
-      state.students = studs;
-      renderRows(); renderLegend(); renderMap();
-    }
+      state.students = await sbSelectStudents();
+      renderRows();
 
-    async function bootstrap(){
-      const session = await requireAuth();
-      if(!session) return; // show auth overlay
-      await reloadAll();
+      state.school = await sbGetSchool();
+      renderLegend(); renderMap();
     }
-
-    // Start
+    async function bootstrap(){ const session = await requireAuth(); if(!session) return; await reloadAll(); }
     (async ()=>{ await bootstrap(); })();
   </script>
 </body>
 </html>
-
-
