@@ -15,6 +15,9 @@
   <!-- Supabase JS v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- SheetJS (Excel) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +25,6 @@
 
   <style>
     :root {
-      /* Dark Luxury Theme (Default) */
       --bg-gradient: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
       --glass-bg: rgba(30, 41, 59, 0.4);
       --glass-border: rgba(148, 163, 184, 0.18);
@@ -42,24 +44,11 @@
       --border: rgba(148, 163, 184, 0.2);
       --input-bg: rgba(15, 23, 42, 0.6);
       --blur-amount: 12px;
-      
-      /* Bus Colors - 12 distinct colors */
-      --bus-color-1: #ef4444;
-      --bus-color-2: #f97316;
-      --bus-color-3: #f59e0b;
-      --bus-color-4: #eab308;
-      --bus-color-5: #84cc16;
-      --bus-color-6: #10b981;
-      --bus-color-7: #06b6d4;
-      --bus-color-8: #3b82f6;
-      --bus-color-9: #6366f1;
-      --bus-color-10: #8b5cf6;
-      --bus-color-11: #a855f7;
-      --bus-color-12: #ec4899;
+      --bus-color-1: #ef4444; --bus-color-2: #f97316; --bus-color-3: #f59e0b; --bus-color-4: #eab308;
+      --bus-color-5: #84cc16; --bus-color-6: #10b981; --bus-color-7: #06b6d4; --bus-color-8: #3b82f6;
+      --bus-color-9: #6366f1; --bus-color-10: #8b5cf6; --bus-color-11: #a855f7; --bus-color-12: #ec4899;
     }
-
     [data-theme="light"] {
-      /* Light Luxury Theme */
       --bg-gradient: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%);
       --glass-bg: rgba(255, 255, 255, 0.7);
       --glass-border: rgba(148, 163, 184, 0.3);
@@ -73,265 +62,108 @@
       --input-bg: rgba(255, 255, 255, 0.5);
       --border: rgba(100, 116, 139, 0.2);
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Tajawal', 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg-gradient);
-      background-attachment: fixed;
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-      position: relative;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: 
-        radial-gradient(circle at 20% 50%, var(--accent-glow) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, var(--accent2-glow) 0%, transparent 50%),
-        radial-gradient(circle at 40% 20%, rgba(168, 85, 247, 0.3) 0%, transparent 50%);
-      opacity: 0.4; pointer-events: none;
-      animation: float 20s ease-in-out infinite; z-index: 0;
-    }
-    @keyframes float { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-30px) scale(1.1)} 66%{transform:translate(-20px,20px) scale(.9)} }
-
-    .glass {
-      background: var(--glass-bg);
-      backdrop-filter: blur(var(--blur-amount));
-      -webkit-backdrop-filter: blur(var(--blur-amount));
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--glass-shadow);
-      transition: all .4s cubic-bezier(.4,0,.2,1);
-    }
-    .glass:hover { transform: translateY(-4px); box-shadow: 0 12px 48px 0 rgba(0,0,0,.5); border-color: rgba(148,163,184,.4); }
-
-    header {
-      position: sticky; top: 0; z-index: 100; padding: 20px;
-      background: var(--glass-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--glass-border);
-      box-shadow: 0 4px 24px rgba(0,0,0,.1);
-    }
-
-    h1 {
-      font-size: 24px; font-weight: 700;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      display: inline-block; animation: shimmer 3s ease-in-out infinite;
-    }
-    @keyframes shimmer { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.2)} }
-
-    .container { max-width: 1400px; margin: 24px auto; padding: 0 20px; position: relative; z-index: 1; }
-
-    .grid { display: grid; gap: 20px; }
-    .grid-2 { grid-template-columns: repeat(2,1fr); }
-    .grid-3 { grid-template-columns: repeat(3,1fr); }
-
-    .card {
-      background: var(--glass-bg);
-      backdrop-filter: blur(var(--blur-amount));
-      -webkit-backdrop-filter: blur(var(--blur-amount));
-      border: 1px solid var(--glass-border);
-      border-radius: 24px; padding: 24px; box-shadow: var(--glass-shadow);
-      transition: all .4s cubic-bezier(.4,0,.2,1); position: relative; overflow: hidden;
-    }
-    .card::before{
-      content:''; position:absolute; top:0; left:0; right:0; height:2px;
-      background: linear-gradient(90deg, transparent 0%, var(--accent) 30%, var(--accent2) 70%, transparent 100%);
-      opacity:0; transition:opacity .4s;
-    }
-    .card:hover::before{opacity:1}
-    .card:hover{ transform: translateY(-6px) scale(1.01); box-shadow: 0 20px 60px rgba(0,0,0,.6); border-color: rgba(148,163,184,.4); }
-
-    label { font-size:13px; color:var(--text-muted); display:block; margin:0 0 8px 0; font-weight:500; display:flex; align-items:center; gap:6px; }
-
-    input, select, textarea {
-      width:100%; background:var(--input-bg); backdrop-filter: blur(8px); color:var(--text);
-      border:1px solid var(--border); border-radius:14px; padding:12px 16px; outline:none;
-      transition:all .3s cubic-bezier(.4,0,.2,1); font-family:'Tajawal',sans-serif; font-size:14px;
-    }
-    input:focus, select:focus, textarea:focus { border-color:var(--accent2); box-shadow:0 0 0 3px var(--accent2-glow), 0 4px 12px rgba(0,0,0,.2); transform: translateY(-2px); background: rgba(15,23,42,.8); }
-    input:hover, select:hover, textarea:hover { border-color: rgba(148,163,184,.4); }
-    textarea { resize: vertical; min-height: 60px; }
-
-    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-
-    .btn {
-      position:relative; border:1px solid var(--border); background:var(--input-bg); backdrop-filter: blur(8px);
-      color:var(--text); padding:12px 20px; border-radius:14px; cursor:pointer; text-decoration:none;
-      display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:14px;
-      transition:all .3s cubic-bezier(.4,0,.2,1); overflow:hidden; font-family:'Tajawal',sans-serif;
-    }
-    .btn::before{ content:''; position:absolute; top:50%; left:50%; width:0; height:0; border-radius:50%; background:rgba(255,255,255,.1); transform:translate(-50%,-50%); transition: width .6s, height .6s; }
-    .btn:hover::before{ width:300px; height:300px; }
-    .btn:hover{ transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.4); border-color: rgba(148,163,184,.5); }
-    .btn:active{ transform: translateY(-1px); }
-    .btn.primary{ background: linear-gradient(135deg,#10b981 0%,#059669 100%); border:none; color:#fff; box-shadow:0 4px 16px var(--accent-glow); }
-    .btn.primary:hover{ box-shadow:0 8px 32px var(--accent-glow); filter:brightness(1.1); }
-    .btn.info{ background: linear-gradient(135deg,#3b82f6 0%,#2563eb 100%); border:none; color:#fff; box-shadow:0 4px 16px var(--accent2-glow); }
-    .btn.info:hover{ box-shadow:0 8px 32px var(--accent2-glow); filter:brightness(1.1); }
-    .btn.warn{ background: linear-gradient(135deg,#f59e0b 0%,#d97706 100%); border:none; color:#fff; box-shadow:0 4px 16px rgba(245,158,11,.4); }
-    .btn.warn:hover{ box-shadow:0 8px 32px rgba(245,158,11,.6); }
-    .btn.danger{ background: linear-gradient(135deg,#ef4444 0%,#dc2626 100%); border:none; color:#fff; box-shadow:0 4px 16px rgba(239,68,68,.4); }
-    .btn.danger:hover{ box-shadow:0 8px 32px rgba(239,68,68,.6); }
-    .btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
-
-    .toolbar{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-
-    .table{ width:100%; border-collapse:collapse; border:1px solid var(--border); border-radius:20px; overflow:hidden; background:var(--glass-bg); backdrop-filter: blur(var(--blur-amount)); }
-    table{ width:100%; border-collapse:collapse; color:var(--text); }
-    thead th{
-      position:sticky; top:0; background: var(--glass-bg); backdrop-filter: blur(20px);
-      border-bottom:2px solid var(--border); padding:16px 12px; text-align:right;
-      font-size:13px; color:var(--accent2); font-weight:700; text-transform:uppercase; letter-spacing:.5px;
-    }
-    tbody td{ border-bottom:1px solid var(--border); padding:14px 12px; font-size:14px; color:var(--text); transition: all .3s; }
-    tbody tr{ transition: all .3s cubic-bezier(.4,0,.2,1); }
-    tbody tr:hover{ background: rgba(59,130,246,.1); transform: scale(1.01); box-shadow: 0 4px 12px rgba(0,0,0,.2); }
-
-    .badge{ display:inline-block; padding:4px 12px; border-radius:999px; background:var(--glass-bg); border:1px solid var(--border); color:var(--accent2); font-size:12px; font-weight:600; backdrop-filter: blur(8px); }
-
-    .required{ outline:2px dashed var(--danger); background: rgba(239,68,68,.1); animation: pulse-red 2s ease-in-out infinite; }
-    @keyframes pulse-red { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)} 50%{box-shadow:0 0 0 8px rgba(239,68,68,0)} }
-
-    .hint{ font-size:13px; color:var(--text-muted); font-style:italic; }
-    .split{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-    @media (max-width:920px){ .grid-2,.grid-3,.split{ grid-template-columns:1fr; } }
-
-    .pill{ border-radius:999px; padding:8px 16px; background:var(--glass-bg); backdrop-filter: blur(8px); border:1px solid var(--border); color:var(--accent); font-size:13px; font-weight:600; display:inline-flex; align-items:center; gap:8px; box-shadow:0 2px 8px rgba(0,0,0,.1); }
-
-    .footer{ color:var(--text-muted); font-size:13px; text-align:center; padding:24px; }
-    .mini{ font-size:12px; color:var(--text-muted); }
-    .mt8{ margin-top:12px; }
-
-    #map{ height:65vh; border-radius:24px; border:1px solid var(--border); overflow:hidden; box-shadow: var(--glass-shadow); }
-    #map,.leaflet-container{ touch-action: pan-x pan-y !important; -ms-touch-action: pan-x pan-y !important; cursor: grab; z-index:1; }
-    .leaflet-container.leaflet-dragging{ cursor: grabbing; }
-
-    .auth-overlay[style*="display:none"], .auth-overlay[style*="display: none"]{ pointer-events:none; }
-
-    .legend{ display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
-    .legend .item{ display:flex; align-items:center; gap:8px; background:var(--glass-bg); backdrop-filter: blur(8px); border:1px solid var(--border); padding:8px 14px; border-radius:999px; transition:all .3s; cursor:pointer; }
-    .legend .item:hover{ transform: translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.3); border-color: var(--accent2); }
-    .swatch{ width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,.3); box-shadow:0 2px 8px rgba(0,0,0,.3); }
-
-    .icon-btn{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; background:var(--glass-bg); backdrop-filter: blur(8px); border:1px solid var(--border); cursor:pointer; transition:all .3s; }
-    .icon-btn:hover{ transform: translateY(-2px) rotate(5deg); box-shadow:0 4px 12px rgba(0,0,0,.3); border-color: var(--accent2); }
-
-    .alert{
-      position:fixed; top:24px; right:24px; padding:16px 20px; border-radius:16px; background:var(--glass-bg);
-      backdrop-filter: blur(20px); border:1px solid var(--border); box-shadow:0 8px 32px rgba(0,0,0,.4);
-      z-index:1000; display:flex; align-items:center; gap:12px; transition:all .4s cubic-bezier(.4,0,.2,1);
-      transform: translateX(150%); min-width:300px;
-    }
-    .alert.show{ transform: translateX(0); }
-    .alert.success{ border-left:4px solid var(--success); box-shadow:0 8px 32px rgba(16,185,129,.3); }
-    .alert.error{ border-left:4px solid var(--danger); box-shadow:0 8px 32px rgba(239,68,68,.3); }
-    .alert.info{ border-left:4px solid var(--accent2); box-shadow:0 8px 32px rgba(59,130,246,.3); }
-
-    .auth-overlay{
-      position:fixed; inset:0; background: linear-gradient(135deg, rgba(10,14,39,.95) 0%, rgba(15,20,25,.98) 100%);
-      backdrop-filter: blur(20px); display:flex; align-items:center; justify-content:center; z-index:999;
-    }
-    [data-theme="light"] .auth-overlay{ background: linear-gradient(135deg, rgba(240,249,255,.95) 0%, rgba(248,250,252,.98) 100%); }
-    .auth-card{ width:min(560px,94vw); background:var(--glass-bg); backdrop-filter: blur(20px); border:1px solid var(--glass-border); border-radius:28px; padding:32px; box-shadow:0 24px 80px rgba(0,0,0,.6); animation: slideUp .6s cubic-bezier(.4,0,.2,1); }
-    @keyframes slideUp{ from{opacity:0; transform:translateY(40px)} to{opacity:1; transform:translateY(0)} }
-    .auth-title{ font-size:24px; font-weight:700; margin-bottom:16px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-
-    .custom-map-icon{
-      position:relative; width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:50%;
-      border:3px solid rgba(255,255,255,.9);
-      box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 0 4px rgba(255,255,255,.1), inset 0 2px 4px rgba(255,255,255,.3);
-      transition: all .3s cubic-bezier(.4,0,.2,1); cursor:pointer; animation: markerPulse 2s ease-in-out infinite;
-    }
-    @keyframes markerPulse{
-      0%,100%{ box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 0 4px rgba(255,255,255,.1), inset 0 2px 4px rgba(255,255,255,.3); }
-      50%{ box-shadow: 0 12px 32px rgba(0,0,0,.6), 0 0 0 8px rgba(255,255,255,.2), inset 0 2px 4px rgba(255,255,255,.4); }
-    }
-    .custom-map-icon::before{
-      content:''; position:absolute; inset:-3px; border-radius:50%; padding:3px;
-      background: linear-gradient(135deg, rgba(255,255,255,.4), transparent);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor; mask-composite: exclude;
-    }
-    .custom-map-icon:hover{ transform: scale(1.2) translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,.7), 0 0 0 6px rgba(255,255,255,.2), inset 0 2px 4px rgba(255,255,255,.4); }
-    .custom-map-icon i{ font-size:20px; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.5); z-index:1; filter: drop-shadow(0 0 4px rgba(255,255,255,.5)); }
-
-    .custom-map-icon.student{ background: linear-gradient(135deg,#10b981 0%,#059669 50%,#047857 100%); }
-    .custom-map-icon.school{ background: linear-gradient(135deg,#f59e0b 0%,#d97706 50%,#b45309 100%); }
-    .custom-map-icon.observer{ background: linear-gradient(135deg,#84cc16 0%,#65a30d 50%,#4d7c0f 100%); }
-
-    .custom-map-icon.bus-1{background:linear-gradient(135deg,#ef4444 0%,#dc2626 50%,#b91c1c 100%)}
-    .custom-map-icon.bus-2{background:linear-gradient(135deg,#f97316 0%,#ea580c 50%,#c2410c 100%)}
-    .custom-map-icon.bus-3{background:linear-gradient(135deg,#f59e0b 0%,#d97706 50%,#b45309 100%)}
-    .custom-map-icon.bus-4{background:linear-gradient(135deg,#eab308 0%,#ca8a04 50%,#a16207 100%)}
-    .custom-map-icon.bus-5{background:linear-gradient(135deg,#84cc16 0%,#65a30d 50%,#4d7c0f 100%)}
-    .custom-map-icon.bus-6{background:linear-gradient(135deg,#10b981 0%,#059669 50%,#047857 100%)}
-    .custom-map-icon.bus-7{background:linear-gradient(135deg,#06b6d4 0%,#0891b2 50%,#0e7490 100%)}
-    .custom-map-icon.bus-8{background:linear-gradient(135deg,#3b82f6 0%,#2563eb 50%,#1d4ed8 100%)}
-    .custom-map-icon.bus-9{background:linear-gradient(135deg,#6366f1 0%,#4f46e5 50%,#4338ca 100%)}
-    .custom-map-icon.bus-10{background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 50%,#6d28d9 100%)}
-    .custom-map-icon.bus-11{background:linear-gradient(135deg,#a855f7 0%,#9333ea 50%,#7e22ce 100%)}
-    .custom-map-icon.bus-12{background:linear-gradient(135deg,#ec4899 0%,#db2777 50%,#be185d 100%)}
-
-    .leaflet-popup-content-wrapper{ background:var(--glass-bg); backdrop-filter: blur(20px); color:var(--text); border:1px solid var(--glass-border); border-radius:20px; box-shadow:0 12px 48px rgba(0,0,0,.6); padding:0; }
-    .leaflet-popup-tip{ background:var(--glass-bg); backdrop-filter: blur(20px); }
-
-    .map-popup{ min-width:280px; padding:20px; }
-    .map-popup .title{ font-weight:700; margin-bottom:8px; font-size:16px; color:var(--text); }
-    .map-popup .meta{ font-size:13px; color:var(--accent2); margin-bottom:12px; font-weight:600; }
-    .map-popup .grid{ display:grid; grid-template-columns:1fr; gap:8px; font-size:14px; }
-    .map-popup .row{ display:flex; align-items:center; gap:10px; }
-    .map-popup .key{ color:var(--text-muted); min-width:100px; font-weight:500; }
-    .map-popup .value{ color:var(--text); font-weight:600; }
-    .map-popup .actions{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
-    .map-popup .btn-link{ text-decoration:none; border:1px solid var(--border); padding:8px 14px; border-radius:12px; background:var(--input-bg); backdrop-filter: blur(8px); color:var(--text); transition:all .3s; font-size:13px; font-weight:600; }
-    .map-popup .btn-link:hover{ background:var(--accent2); color:#fff; transform: translateY(-2px); box-shadow:0 4px 12px var(--accent2-glow); }
-
-    .theme-toggle{ position:relative; width:70px; height:36px; border-radius:18px; background:var(--glass-bg); backdrop-filter: blur(8px); border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; padding:0 6px; transition:all .4s; box-shadow: inset 0 2px 8px rgba(0,0,0,.2); }
-    .theme-toggle::before{ content:''; position:absolute; width:28px; height:28px; border-radius:50%; background: linear-gradient(135deg,#f59e0b 0%,#d97706 100%); box-shadow:0 2px 8px rgba(0,0,0,.3), 0 0 12px rgba(245,158,11,.5); transition: transform .4s cubic-bezier(.4,0,.2,1); }
-    [data-theme="dark"] .theme-toggle::before{ transform: translateX(0); }
-    [data-theme="light"] .theme-toggle::before{ transform: translateX(34px); }
-    .theme-toggle i{ position:relative; z-index:1; font-size:14px; transition:all .3s; }
-    .theme-toggle .fa-sun{ color:#f59e0b; margin-right:auto; }
-    .theme-toggle .fa-moon{ color:#94a3b8; margin-left:auto; }
-    .theme-toggle:hover{ box-shadow: inset 0 2px 12px rgba(0,0,0,.3), 0 0 16px var(--accent2-glow); }
-
-    .tabs{ display:flex; background:var(--glass-bg); backdrop-filter: blur(var(--blur-amount)); border-radius:18px; padding:6px; margin-bottom:20px; border:1px solid var(--border); box-shadow: var(--glass-shadow); }
-    .tab{ flex:1; padding:14px 20px; text-align:center; border-radius:12px; cursor:pointer; transition:all .4s cubic-bezier(.4,0,.2,1); font-weight:600; color:var(--text-muted); position:relative; overflow:hidden; }
-    .tab::before{ content:''; position:absolute; inset:0; background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%); opacity:0; transition:opacity .4s; }
-    .tab.active{ background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%); color:#fff; box-shadow:0 4px 16px var(--accent-glow); transform: scale(1.02); }
-    .tab:not(.active):hover{ background: rgba(59,130,246,.1); color:var(--text); }
-    .tab-content{ display:none; animation: fadeIn .5s ease-in-out; }
-    .tab-content.active{ display:block; }
-    @keyframes fadeIn{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
-
-    .section-header{
-      display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding:16px 20px;
-      background:var(--glass-bg); backdrop-filter: blur(var(--blur-amount)); border-radius:18px; margin-bottom:12px;
-      border:1px solid var(--border); transition: all .4s cubic-bezier(.4,0,.2,1); box-shadow: var(--glass-shadow);
-    }
-    .section-header:hover{ transform: translateX(-4px); box-shadow:0 8px 32px rgba(0,0,0,.4); border-color: var(--accent2); }
-    .section-header h2{ margin:0; font-size:20px; display:flex; align-items:center; gap:12px; font-weight:700; background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .section-content{ overflow:hidden; transition:max-height .5s cubic-bezier(.4,0,.2,1); }
-    .section-content.collapsed{ max-height:0; }
-    .section-content.expanded{ max-height:3000px; }
-    .toggle-icon{ transition: transform .4s cubic-bezier(.4,0,.2,1); font-size:18px; color:var(--accent2); }
-    .section-header.collapsed .toggle-icon{ transform: rotate(180deg); }
-
-    ::-webkit-scrollbar{ width:10px; height:10px; }
-    ::-webkit-scrollbar-track{ background:var(--glass-bg); border-radius:10px; }
-    ::-webkit-scrollbar-thumb{ background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%); border-radius:10px; border:2px solid var(--glass-bg); }
-    ::-webkit-scrollbar-thumb:hover{ background: linear-gradient(135deg, var(--accent2) 0%, var(--purple) 100%); }
-
-    @keyframes spin{ to{ transform:rotate(360deg) } }
-    .loading{ animation: spin 1s linear infinite; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Tajawal','Segoe UI',system-ui,sans-serif;background:var(--bg-gradient);background-attachment:fixed;color:var(--text);min-height:100vh;overflow-x:hidden;position:relative}
+    body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 20% 50%,var(--accent-glow) 0%,transparent 50%),radial-gradient(circle at 80% 80%,var(--accent2-glow) 0%,transparent 50%),radial-gradient(circle at 40% 20%,rgba(168,85,247,.3) 0%,transparent 50%);opacity:.4;pointer-events:none;animation:float 20s ease-in-out infinite;z-index:0}
+    @keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-30px) scale(1.1)}66%{transform:translate(-20px,20px) scale(.9)}}
+    .glass{background:var(--glass-bg);backdrop-filter:blur(var(--blur-amount));-webkit-backdrop-filter:blur(var(--blur-amount));border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);transition:all .4s cubic-bezier(.4,0,.2,1)}
+    .glass:hover{transform:translateY(-4px);box-shadow:0 12px 48px 0 rgba(0,0,0,.5);border-color:rgba(148,163,184,.4)}
+    header{position:sticky;top:0;z-index:100;padding:20px;background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--glass-border);box-shadow:0 4px 24px rgba(0,0,0,.1)}
+    h1{font-size:24px;font-weight:700;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;animation:shimmer 3s ease-in-out infinite}
+    @keyframes shimmer{0%,100%{filter:brightness(1)}50%{filter:brightness(1.2)}}
+    .container{max-width:1400px;margin:24px auto;padding:0 20px;position:relative;z-index:1}
+    .grid{display:grid;gap:20px}.grid-2{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:repeat(3,1fr)}
+    .card{background:var(--glass-bg);backdrop-filter:blur(var(--blur-amount));-webkit-backdrop-filter:blur(var(--blur-amount));border:1px solid var(--glass-border);border-radius:24px;padding:24px;box-shadow:var(--glass-shadow);transition:all .4s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden}
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 0%,var(--accent) 30%,var(--accent2) 70%,transparent 100%);opacity:0;transition:opacity .4s}
+    .card:hover::before{opacity:1}.card:hover{transform:translateY(-6px) scale(1.01);box-shadow:0 20px 60px rgba(0,0,0,.6);border-color:rgba(148,163,184,.4)}
+    label{font-size:13px;color:var(--text-muted);display:block;margin:0 0 8px 0;font-weight:500;display:flex;align-items:center;gap:6px}
+    input,select,textarea{width:100%;background:var(--input-bg);backdrop-filter:blur(8px);color:var(--text);border:1px solid var(--border);border-radius:14px;padding:12px 16px;outline:none;transition:all .3s cubic-bezier(.4,0,.2,1);font-family:'Tajawal',sans-serif;font-size:14px}
+    input:focus,select:focus,textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 3px var(--accent2-glow),0 4px 12px rgba(0,0,0,.2);transform:translateY(-2px);background:rgba(15,23,42,.8)}
+    input:hover,select:hover,textarea:hover{border-color:rgba(148,163,184,.4)}textarea{resize:vertical;min-height:60px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .btn{position:relative;border:1px solid var(--border);background:var(--input-bg);backdrop-filter:blur(8px);color:var(--text);padding:12px 20px;border-radius:14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;transition:all .3s cubic-bezier(.4,0,.2,1);overflow:hidden;font-family:'Tajawal',sans-serif}
+    .btn::before{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,.1);transform:translate(-50%,-50%);transition:width .6s,height .6s}
+    .btn:hover::before{width:300px;height:300px}.btn:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.4);border-color:rgba(148,163,184,.5)}
+    .btn:active{transform:translateY(-1px)}.btn.primary{background:linear-gradient(135deg,#10b981 0%,#059669 100%);border:none;color:#fff;box-shadow:0 4px 16px var(--accent-glow)}
+    .btn.primary:hover{box-shadow:0 8px 32px var(--accent-glow);filter:brightness(1.1)}
+    .btn.info{background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);border:none;color:#fff;box-shadow:0 4px 16px var(--accent2-glow)}
+    .btn.info:hover{box-shadow:0 8px 32px var(--accent2-glow);filter:brightness(1.1)}
+    .btn.warn{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);border:none;color:#fff;box-shadow:0 4px 16px rgba(245,158,11,.4)}
+    .btn.warn:hover{box-shadow:0 8px 32px rgba(245,158,11,.6)}
+    .btn.danger{background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);border:none;color:#fff;box-shadow:0 4px 16px rgba(239,68,68,.4)}
+    .btn.danger:hover{box-shadow:0 8px 32px rgba(239,68,68,.6)}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .table{width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:20px;overflow:hidden;background:var(--glass-bg);backdrop-filter:blur(var(--blur-amount))}
+    table{width:100%;border-collapse:collapse;color:var(--text)}
+    thead th{position:sticky;top:0;background:var(--glass-bg);backdrop-filter:blur(20px);border-bottom:2px solid var(--border);padding:16px 12px;text-align:right;font-size:13px;color:var(--accent2);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    tbody td{border-bottom:1px solid var(--border);padding:14px 12px;font-size:14px;color:var(--text);transition:all .3s}
+    tbody tr{transition:all .3s cubic-bezier(.4,0,.2,1)}tbody tr:hover{background:rgba(59,130,246,.1);transform:scale(1.01);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+    .badge{display:inline-block;padding:4px 12px;border-radius:999px;background:var(--glass-bg);border:1px solid var(--border);color:var(--accent2);font-size:12px;font-weight:600;backdrop-filter:blur(8px)}
+    .required{outline:2px dashed var(--danger);background:rgba(239,68,68,.1);animation:pulse-red 2s ease-in-out infinite}
+    @keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
+    .hint{font-size:13px;color:var(--text-muted);font-style:italic}.split{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    @media (max-width:920px){.grid-2,.grid-3,.split{grid-template-columns:1fr}}
+    .pill{border-radius:999px;padding:8px 16px;background:var(--glass-bg);backdrop-filter:blur(8px);border:1px solid var(--border);color:var(--accent);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+    .footer{color:var(--text-muted);font-size:13px;text-align:center;padding:24px}.mini{font-size:12px;color:var(--text-muted)}.mt8{margin-top:12px}
+    #map{height:65vh;border-radius:24px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--glass-shadow)}
+    #map,.leaflet-container{touch-action:pan-x pan-y!important;-ms-touch-action:pan-x pan-y!important;cursor:grab;z-index:1}
+    .leaflet-container.leaflet-dragging{cursor:grabbing}
+    .auth-overlay[style*="display:none"],.auth-overlay[style*="display: none"]{pointer-events:none}
+    .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+    .legend .item{display:flex;align-items:center;gap:8px;background:var(--glass-bg);backdrop-filter:blur(8px);border:1px solid var(--border);padding:8px 14px;border-radius:999px;transition:all .3s;cursor:pointer}
+    .legend .item:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.3);border-color:var(--accent2)}
+    .swatch{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.3);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:var(--glass-bg);backdrop-filter:blur(8px);border:1px solid var(--border);cursor:pointer;transition:all .3s}
+    .icon-btn:hover{transform:translateY(-2px) rotate(5deg);box-shadow:0 4px 12px rgba(0,0,0,.3);border-color:var(--accent2)}
+    .alert{position:fixed;top:24px;right:24px;padding:16px 20px;border-radius:16px;background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;gap:12px;transition:all .4s cubic-bezier(.4,0,.2,1);transform:translateX(150%);min-width:300px}
+    .alert.show{transform:translateX(0)}.alert.success{border-left:4px solid var(--success);box-shadow:0 8px 32px rgba(16,185,129,.3)}.alert.error{border-left:4px solid var(--danger);box-shadow:0 8px 32px rgba(239,68,68,.3)}.alert.info{border-left:4px solid var(--accent2);box-shadow:0 8px 32px rgba(59,130,246,.3)}
+    .auth-overlay{position:fixed;inset:0;background:linear-gradient(135deg,rgba(10,14,39,.95) 0%,rgba(15,20,25,.98) 100%);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;z-index:999}
+    [data-theme="light"] .auth-overlay{background:linear-gradient(135deg,rgba(240,249,255,.95) 0%,rgba(248,250,252,.98) 100%)}
+    .auth-card{width:min(560px,94vw);background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:28px;padding:32px;box-shadow:0 24px 80px rgba(0,0,0,.6);animation:slideUp .6s cubic-bezier(.4,0,.2,1)}
+    @keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+    .auth-title{font-size:24px;font-weight:700;margin-bottom:16px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .custom-map-icon{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:3px solid rgba(255,255,255,.9);box-shadow:0 8px 24px rgba(0,0,0,.5),0 0 0 4px rgba(255,255,255,.1),inset 0 2px 4px rgba(255,255,255,.3);transition:all .3s cubic-bezier(.4,0,.2,1);cursor:pointer;animation:markerPulse 2s ease-in-out infinite}
+    @keyframes markerPulse{0%,100%{box-shadow:0 8px 24px rgba(0,0,0,.5),0 0 0 4px rgba(255,255,255,.1),inset 0 2px 4px rgba(255,255,255,.3)}50%{box-shadow:0 12px 32px rgba(0,0,0,.6),0 0 0 8px rgba(255,255,255,.2),inset 0 2px 4px rgba(255,255,255,.4)}}
+    .custom-map-icon::before{content:'';position:absolute;inset:-3px;border-radius:50%;padding:3px;background:linear-gradient(135deg,rgba(255,255,255,.4),transparent);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+    .custom-map-icon:hover{transform:scale(1.2) translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 6px rgba(255,255,255,.2),inset 0 2px 4px rgba(255,255,255,.4)}
+    .custom-map-icon i{font-size:20px;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.5);z-index:1;filter:drop-shadow(0 0 4px rgba(255,255,255,.5))}
+    .custom-map-icon.student{background:linear-gradient(135deg,#10b981 0%,#059669 50%,#047857 100%)}
+    .custom-map-icon.school{background:linear-gradient(135deg,#f59e0b 0%,#d97706 50%,#b45309 100%)}
+    .custom-map-icon.observer{background:linear-gradient(135deg,#84cc16 0%,#65a30d 50%,#4d7c0f 100%)}
+    .custom-map-icon.bus-1{background:linear-gradient(135deg,#ef4444 0%,#dc2626 50%,#b91c1c 100%)}.custom-map-icon.bus-2{background:linear-gradient(135deg,#f97316 0%,#ea580c 50%,#c2410c 100%)}.custom-map-icon.bus-3{background:linear-gradient(135deg,#f59e0b 0%,#d97706 50%,#b45309 100%)}.custom-map-icon.bus-4{background:linear-gradient(135deg,#eab308 0%,#ca8a04 50%,#a16207 100%)}.custom-map-icon.bus-5{background:linear-gradient(135deg,#84cc16 0%,#65a30d 50%,#4d7c0f 100%)}.custom-map-icon.bus-6{background:linear-gradient(135deg,#10b981 0%,#059669 50%,#047857 100%)}.custom-map-icon.bus-7{background:linear-gradient(135deg,#06b6d4 0%,#0891b2 50%,#0e7490 100%)}.custom-map-icon.bus-8{background:linear-gradient(135deg,#3b82f6 0%,#2563eb 50%,#1d4ed8 100%)}.custom-map-icon.bus-9{background:linear-gradient(135deg,#6366f1 0%,#4f46e5 50%,#4338ca 100%)}.custom-map-icon.bus-10{background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 50%,#6d28d9 100%)}.custom-map-icon.bus-11{background:linear-gradient(135deg,#a855f7 0%,#9333ea 50%,#7e22ce 100%)}.custom-map-icon.bus-12{background:linear-gradient(135deg,#ec4899 0%,#db2777 50%,#be185d 100%)}
+    .leaflet-popup-content-wrapper{background:var(--glass-bg);backdrop-filter:blur(20px);color:var(--text);border:1px solid var(--glass-border);border-radius:20px;box-shadow:0 12px 48px rgba(0,0,0,.6);padding:0}
+    .leaflet-popup-tip{background:var(--glass-bg);backdrop-filter:blur(20px)}
+    .map-popup{min-width:280px;padding:20px}.map-popup .title{font-weight:700;margin-bottom:8px;font-size:16px;color:var(--text)}
+    .map-popup .meta{font-size:13px;color:var(--accent2);margin-bottom:12px;font-weight:600}
+    .map-popup .grid{display:grid;grid-template-columns:1fr;gap:8px;font-size:14px}
+    .map-popup .row{display:flex;align-items:center;gap:10px}
+    .map-popup .key{color:var(--text-muted);min-width:100px;font-weight:500}
+    .map-popup .value{color:var(--text);font-weight:600}
+    .map-popup .actions{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+    .map-popup .btn-link{text-decoration:none;border:1px solid var(--border);padding:8px 14px;border-radius:12px;background:var(--input-bg);backdrop-filter:blur(8px);color:var(--text);transition:all .3s;font-size:13px;font-weight:600}
+    .map-popup .btn-link:hover{background:var(--accent2);color:#fff;transform:translateY(-2px);box-shadow:0 4px 12px var(--accent2-glow)}
+    .theme-toggle{position:relative;width:70px;height:36px;border-radius:18px;background:var(--glass-bg);backdrop-filter:blur(8px);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;padding:0 6px;transition:all .4s;box-shadow:inset 0 2px 8px rgba(0,0,0,.2)}
+    .theme-toggle::before{content:'';position:absolute;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);box-shadow:0 2px 8px rgba(0,0,0,.3),0 0 12px rgba(245,158,11,.5);transition:transform .4s cubic-bezier(.4,0,.2,1)}
+    [data-theme="dark"] .theme-toggle::before{transform:translateX(0)}[data-theme="light"] .theme-toggle::before{transform:translateX(34px)}
+    .theme-toggle i{position:relative;z-index:1;font-size:14px;transition:all .3s}.theme-toggle .fa-sun{color:#f59e0b;margin-right:auto}.theme-toggle .fa-moon{color:#94a3b8;margin-left:auto}
+    .theme-toggle:hover{box-shadow:inset 0 2px 12px rgba(0,0,0,.3),0 0 16px var(--accent2-glow)}
+    .tabs{display:flex;background:var(--glass-bg);backdrop-filter:blur(var(--blur-amount));border-radius:18px;padding:6px;margin-bottom:20px;border:1px solid var(--border);box-shadow:var(--glass-shadow)}
+    .tab{flex:1;padding:14px 20px;text-align:center;border-radius:12px;cursor:pointer;transition:all .4s cubic-bezier(.4,0,.2,1);font-weight:600;color:var(--text-muted);position:relative;overflow:hidden}
+    .tab.active{background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);color:#fff;box-shadow:0 4px 16px var(--accent-glow);transform:scale(1.02)}
+    .tab:not(.active):hover{background:rgba(59,130,246,.1);color:var(--text)}
+    .tab-content{display:none;animation:fadeIn .5s ease-in-out}.tab-content.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .section-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:16px 20px;background:var(--glass-bg);backdrop-filter:blur(var(--blur-amount));border-radius:18px;margin-bottom:12px;border:1px solid var(--border);transition:all .4s cubic-bezier(.4,0,.2,1);box-shadow:var(--glass-shadow)}
+    .section-header:hover{transform:translateX(-4px);box-shadow:0 8px 32px rgba(0,0,0,.4);border-color:var(--accent2)}
+    .section-header h2{margin:0;font-size:20px;display:flex;align-items:center;gap:12px;font-weight:700;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .section-content{overflow:hidden;transition:max-height .5s cubic-bezier(.4,0,.2,1)}
+    .section-content.collapsed{max-height:0}.section-content.expanded{max-height:3000px}
+    .toggle-icon{transition:transform .4s cubic-bezier(.4,0,.2,1);font-size:18px;color:var(--accent2)}
+    .section-header.collapsed .toggle-icon{transform:rotate(180deg)}
+    ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:var(--glass-bg);border-radius:10px}
+    ::-webkit-scrollbar-thumb{background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);border-radius:10px;border:2px solid var(--glass-bg)}
+    ::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,var(--accent2) 0%,var(--purple) 100%)}
+    @keyframes spin{to{transform:rotate(360deg)}}.loading{animation:spin 1s linear infinite}
   </style>
 </head>
 <body>
@@ -370,9 +202,10 @@
       </div>
       <div class="row">
         <button class="btn info" id="btnExport"><i class="fas fa-file-export"></i> تصدير CSV</button>
+        <button class="btn info" id="btnExportXLSX"><i class="fas fa-file-excel"></i> تصدير Excel</button>
         <button class="btn info" id="btnExportAll"><i class="fas fa-file-csv"></i> تصدير الكل</button>
-        <label class="btn" for="fileImport"><i class="fas fa-file-import"></i> استيراد CSV</label>
-        <input id="fileImport" type="file" accept=".csv" style="display:none" />
+        <label class="btn" for="fileImport"><i class="fas fa-file-import"></i> استيراد (CSV/Excel)</label>
+        <input id="fileImport" type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, .xlsx" style="display:none" />
         <div class="theme-toggle" id="themeToggle">
           <i class="fas fa-sun"></i>
           <i class="fas fa-moon"></i>
@@ -383,16 +216,13 @@
   </header>
 
   <main class="container" id="app" hidden>
-    <!-- Tabs Navigation -->
     <div class="tabs">
       <div class="tab active" data-tab="students">الطلاب والباصات</div>
       <div class="tab" data-tab="map">الخريطة التفاعلية</div>
       <div class="tab" data-tab="management">الإدارة</div>
     </div>
 
-    <!-- Tab Contents -->
     <div class="tab-content active" id="tab-students">
-      <!-- إعداد المدرسة -->
       <div class="section-header" id="schoolSectionHeader">
         <h2><i class="fas fa-school"></i> إعداد المدرسة</h2>
         <i class="fas fa-chevron-down toggle-icon"></i>
@@ -435,7 +265,6 @@
         </div>
       </section>
 
-      <!-- نموذج الطالب -->
       <div class="section-header" id="studentFormSectionHeader">
         <h2><i class="fas fa-user-plus"></i> نموذج إدخال طالب</h2>
         <i class="fas fa-chevron-down toggle-icon"></i>
@@ -467,7 +296,6 @@
                   <label><i class="fas fa-users"></i> الشعبة</label>
                   <input id="klass" placeholder="مثال: ب" />
                 </div>
-
                 <div class="grid-2">
                   <div>
                     <label><i class="fas fa-map-marker-alt"></i> Lat</label>
@@ -486,7 +314,6 @@
                     <button class="btn" id="copyMainMap"><i class="fas fa-copy"></i> نسخ الرابط</button>
                   </div>
                 </div>
-
                 <div class="grid-2">
                   <div>
                     <label><i class="fas fa-user-shield"></i> اسم ولي الأمر *</label>
@@ -550,7 +377,6 @@
         </div>
       </section>
 
-      <!-- جدول الطلاب -->
       <div class="section-header" id="studentsTableSectionHeader">
         <h2><i class="fas fa-table"></i> سجل الطلاب</h2>
         <i class="fas fa-chevron-down toggle-icon"></i>
@@ -595,7 +421,6 @@
     </div>
 
     <div class="tab-content" id="tab-map">
-      <!-- الخريطة -->
       <div class="section-header" id="mapSectionHeader">
         <h2><i class="fas fa-map"></i> الخريطة التفاعلية</h2>
         <i class="fas fa-chevron-down toggle-icon"></i>
@@ -619,7 +444,6 @@
     </div>
 
     <div class="tab-content" id="tab-management">
-      <!-- إدارة الباصات -->
       <div class="section-header" id="busAdminSectionHeader">
         <h2><i class="fas fa-cogs"></i> إدارة الباصات</h2>
         <i class="fas fa-chevron-down toggle-icon"></i>
@@ -627,9 +451,7 @@
       <section class="section-content expanded" id="busAdminSection">
         <div class="card">
           <div class="pill"><i class="fas fa-cogs"></i> إدارة الباصات</div>
-
           <div class="grid grid-3 mt8" id="busManager"></div>
-
           <div class="row mt8" style="flex-wrap:wrap; gap:8px">
             <input id="newBusNo" placeholder="رقم الباص *" />
             <input id="newPlate" placeholder="رقم اللوحة *" />
@@ -661,8 +483,8 @@
 
   <script>
     // ===================== CONFIG =====================
-    const SUPABASE_URL ="https://sxaegfyfmjoyvccpipiz.supabase.co"; // <-- عدّل
-    const SUPABASE_ANON_KEY ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4YWVnZnlmbWpveXZjY3BpcGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExMzIzMzUsImV4cCI6MjA3NjcwODMzNX0.IFw5sZXaXWVMEn1F5YXvu77FHHwIfG4GdFjTU49GMcw"; // <-- عدّل
+    const SUPABASE_URL ="https://sxaegfyfmjoyvccpipiz.supabase.co";
+    const SUPABASE_ANON_KEY ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4YWVnZnlmbWpveXZjY3BpcGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExMzIzMzUsImV4cCI6MjA3NjcwODMzNX0.IFw5sZXaXWVMEn1F5YXvu77FHHwIfG4GdFjTU49GMcw";
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
@@ -698,26 +520,7 @@
     function hashStr(str){ let h=0; for(let i=0;i<str.length;i++){ h=(h<<5)-h + str.charCodeAt(i); h|=0; } return Math.abs(h); }
     function busColor(busNo){ return busNo ? PALETTE[hashStr(busNo)%PALETTE.length] : '#9ca3af'; }
 
-    function createCustomIcon({ type='student', busNo=null, sizeClass='zoom-medium' }) {
-      let className = 'custom-map-icon ';
-      let icon = '';
-      if (type === 'student') { className += 'student'; icon = 'fa-user-graduate'; }
-      else if (type === 'bus') {
-        const busColors = ['bus-1','bus-2','bus-3','bus-4','bus-5','bus-6','bus-7','bus-8','bus-9','bus-10','bus-11','bus-12'];
-        const busIndex = busNo ? (hashStr(busNo) % 12) : 0;
-        className += busColors[busIndex]; icon = 'fa-bus';
-      } else if (type === 'observer') { className += 'observer'; icon = 'fa-user-shield'; }
-      else if (type === 'school') { className += 'school'; icon = 'fa-school'; }
-      const html = `<div class="${className}"><i class="fas ${icon}"></i></div>`;
-      return L.divIcon({ className: 'custom-icon', html, iconSize: [44, 44], iconAnchor: [22, 22], popupAnchor: [0, -22] });
-    }
-
-    function popupBtn(href, label, icon='fa-external-link-alt'){
-      return `<a class="btn-link" target="_blank" rel="noopener" href="${href}"><i class="fa ${icon}"></i> ${label}</a>`;
-    }
-    function mapLink(lat, lng){ return `https://maps.google.com/?q=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`; }
-
-    // ===================== THEME =====================
+    // ===================== THEME/TABS/COLLAPSIBLE/AUTH (بدون تغيير) =====================
     function initTheme() {
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
@@ -728,8 +531,6 @@
       document.documentElement.setAttribute('data-theme', newTheme);
       localStorage.setItem('theme', newTheme);
     }
-
-    // ===================== TABS =====================
     function initTabs() {
       const tabs = qsa('.tab');
       function activateTab(tabEl){
@@ -741,34 +542,25 @@
         content.classList.add('active');
         if (tabId === 'map') {
           ensureMap();
-          setTimeout(() => {
-            try { map.invalidateSize(true); } catch(e){}
-            renderMap({ fit: false });
-          }, 50);
+          setTimeout(() => { try { map.invalidateSize(true); } catch(e){} renderMap({ fit: false }); }, 50);
         }
       }
       tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab)));
       const initiallyActive = document.querySelector('.tab.active') || tabs[0];
       if (initiallyActive) activateTab(initiallyActive);
     }
-
-    // ===================== COLLAPSIBLE =====================
     function initCollapsibleSections() {
       const sectionHeaders = qsa('.section-header');
       sectionHeaders.forEach(header => {
         header.addEventListener('click', () => {
           const sectionId = header.id.replace('Header', '');
           const content = qs(`#${sectionId}`);
-          if (content.classList.contains('collapsed')) {
-            content.classList.remove('collapsed'); content.classList.add('expanded'); header.classList.remove('collapsed');
-          } else {
-            content.classList.remove('expanded'); content.classList.add('collapsed'); header.classList.add('collapsed');
-          }
+          if (content.classList.contains('collapsed')) { content.classList.remove('collapsed'); content.classList.add('expanded'); header.classList.remove('collapsed'); }
+          else { content.classList.remove('expanded'); content.classList.add('collapsed'); header.classList.add('collapsed'); }
         });
       });
     }
 
-    // ===================== AUTH =====================
     const authOverlay = qs('#auth');
     const appMain = qs('#app');
     const authStatus = qs('#authStatus');
@@ -798,107 +590,40 @@
 
     // ===================== DATA ACCESS =====================
     async function sbUser(){ const { data:{ session } } = await supabase.auth.getSession(); return session?.user || null; }
+    async function sbSelectBuses(){ const user = await sbUser(); if(!user) return []; const { data, error } = await supabase.from('buses').select('*').eq('profile_id', user.id).order('bus_no',{ascending:true}); if(error){ showAlert('خطأ تحميل الباصات: '+error.message,'error'); return []; } return data||[]; }
+    async function sbInsertBus(bus){ const user = await sbUser(); if(!user) return; const payload = { ...bus, profile_id: user.id }; const { error } = await supabase.from('buses').insert(payload); if(error) throw error; }
+    async function sbUpdateBus(id,patch){ const { error } = await supabase.from('buses').update(patch).eq('id', id); if(error) throw error; }
+    async function sbDeleteBus(id){ const { error } = await supabase.from('buses').delete().eq('id', id); if(error) throw error; }
+    async function sbSelectStudents(){ const user = await sbUser(); if(!user) return []; const { data, error } = await supabase.from('students').select('*').eq('profile_id', user.id).order('created_at',{ascending:true}); if(error){ showAlert('خطأ تحميل الطلاب: '+error.message,'error'); return []; } return data||[]; }
+    async function sbInsertStudent(stu){ const user = await sbUser(); if(!user) return; const payload = { ...stu, profile_id: user.id }; const { error } = await supabase.from('students').insert(payload); if(error) throw error; }
+    async function sbUpdateStudent(id,patch){ const { error } = await supabase.from('students').update(patch).eq('id', id); if(error) throw error; }
+    async function sbDeleteStudent(id){ const { error } = await supabase.from('students').delete().eq('id', id); if(error) throw error; }
+    async function sbDeleteAll(){ const user = await sbUser(); if(!user) return; await supabase.from('students').delete().eq('profile_id', user.id); }
+    async function sbGetSchool(){ const user = await sbUser(); if(!user) return null; const { data, error } = await supabase.from('school_settings').select('*').eq('profile_id', user.id).single(); if(error && error.code!=='PGRST116'){ showAlert('خطأ تحميل إعداد المدرسة: '+error.message,'error'); return null; } return data||null; }
+    async function sbUpsertSchool(obj){ const user = await sbUser(); if(!user) return; const { data, error } = await supabase.from('school_settings').upsert([{...obj, profile_id: user.id}],{ onConflict:'profile_id' }).select().single(); if(error) throw error; return data; }
 
-    async function sbSelectBuses(){
-      const user = await sbUser(); if(!user) return [];
-      const { data, error } = await supabase.from('buses').select('*').eq('profile_id', user.id).order('bus_no', { ascending:true });
-      if(error){ showAlert('خطأ تحميل الباصات: '+error.message, 'error'); return []; }
-      return data||[];
-    }
-    async function sbInsertBus(bus){
-      const user = await sbUser(); if(!user) return;
-      const payload = { ...bus, profile_id: user.id };
-      const { error } = await supabase.from('buses').insert(payload);
-      if(error) throw error;
-    }
-    async function sbUpdateBus(id,patch){
-      const { error } = await supabase.from('buses').update(patch).eq('id', id);
-      if(error) throw error;
-    }
-    async function sbDeleteBus(id){
-      const { error } = await supabase.from('buses').delete().eq('id', id);
-      if(error) throw error;
-    }
-
-    async function sbSelectStudents(){
-      const user = await sbUser(); if(!user) return [];
-      const { data, error } = await supabase.from('students').select('*').eq('profile_id', user.id).order('created_at', { ascending:true });
-      if(error){ showAlert('خطأ تحميل الطلاب: '+error.message, 'error'); return []; }
-      return data||[];
-    }
-    async function sbInsertStudent(stu){
-      const user = await sbUser(); if(!user) return;
-      const payload = { ...stu, profile_id: user.id };
-      const { error } = await supabase.from('students').insert(payload);
-      if(error) throw error;
-    }
-    async function sbUpdateStudent(id,patch){
-      const { error } = await supabase.from('students').update(patch).eq('id', id);
-      if(error) throw error;
-    }
-    async function sbDeleteStudent(id){
-      const { error } = await supabase.from('students').delete().eq('id', id);
-      if(error) throw error;
-    }
-    async function sbDeleteAll(){
-      const user = await sbUser(); if(!user) return;
-      await supabase.from('students').delete().eq('profile_id', user.id);
-    }
-
-    async function sbGetSchool(){
-      const user = await sbUser(); if(!user) return null;
-      const { data, error } = await supabase.from('school_settings').select('*').eq('profile_id', user.id).single();
-      if(error && error.code!=='PGRST116'){ showAlert('خطأ تحميل إعداد المدرسة: '+error.message, 'error'); return null; }
-      return data||null;
-    }
-    async function sbUpsertSchool(obj){
-      const user = await sbUser(); if(!user) return;
-      const { data, error } = await supabase.from('school_settings').upsert(
-        [{...obj, profile_id: user.id}],
-        { onConflict: 'profile_id' }
-      ).select().single();
-      if(error) throw error;
-      return data;
-    }
-
-    // ===================== STATE =====================
+    // ===================== STATE & RENDERERS (بدون تغيير) =====================
     let state = { buses: [], students: [], editingStudentId: null, editingBusId: null, school: null };
-
-    // ===================== UI HELPERS =====================
     function updateLinkPreview(inputSel, latSel, lngSel, aSel){
-      const lat = qs(latSel).value.trim();
-      const lng = qs(lngSel).value.trim();
-      const any = qs(inputSel).value.trim();
-      const a = qs(aSel);
-      let url = '#';
-      if(lat && lng){ url = `https://maps.google.com/?q=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`; }
-      else if(any){ url = mapUrlFrom(any); }
+      const lat = qs(latSel).value.trim(), lng = qs(lngSel).value.trim(), any = qs(inputSel).value.trim(); const a = qs(aSel);
+      let url = '#'; if(lat && lng){ url = `https://maps.google.com/?q=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`; } else if(any){ url = mapUrlFrom(any); }
       a.href = url; a.textContent = (url==='#') ? '—' : 'فتح في Google Maps';
     }
     function hydrateLatLngFromAny(inputSel, latSel, lngSel){
-      const any = qs(inputSel).value.trim();
-      const p = parseAnyLocation(any);
-      const latEl = qs(latSel), lngEl = qs(lngSel);
+      const any = qs(inputSel).value.trim(); const p = parseAnyLocation(any); const latEl = qs(latSel), lngEl = qs(lngSel);
       if(p.lat && p.lng){ if(!latEl.value) latEl.value = p.lat; if(!lngEl.value) lngEl.value = p.lng; }
     }
-
-    // ===================== RENDERERS =====================
-    function renderBusOptions(){
-      const sel = qs('#busNo');
-      const current = sel.value;
+    function renderBusOptions(){ const sel = qs('#busNo'); const current = sel.value;
       sel.innerHTML = '<option value="">— اختر —</option>' + state.buses.map(b=>`<option value="${b.bus_no}">${b.bus_no}</option>`).join('');
-      if(state.buses.some(b=>b.bus_no===current)) sel.value = current;
-      updateBusAuto();
+      if(state.buses.some(b=>b.bus_no===current)) sel.value = current; updateBusAuto();
     }
     function getBus(busNo){ return state.buses.find(b=>b.bus_no===busNo); }
-    function updateBusAuto(){
-      const bus = getBus(qs('#busNo').value);
+    function updateBusAuto(){ const bus = getBus(qs('#busNo').value);
       qs('#driverName').value   = bus ? (bus.driver_name||'')   : '';
       qs('#driverPhone').value  = bus ? (bus.driver_phone||'')  : '';
       qs('#observerName').value = bus ? (bus.observer_name||'') : '';
       qs('#observerPhone').value= bus ? (bus.observer_phone||''): '';
     }
-
     function renderBusManager(){
       const host = qs('#busManager'); host.innerHTML='';
       state.buses.forEach((b)=>{
@@ -924,7 +649,6 @@
       sel.innerHTML = '<option value="">كل الباصات</option>' + state.buses.map(b=>`<option value="${b.bus_no}">${b.bus_no}</option>`).join('');
       if(cur && state.buses.some(b=>b.bus_no===cur)) sel.value = cur;
     }
-
     function renderLegend(){
       const legend = qs('#legend'); legend.innerHTML='';
       const inUse = new Set(state.students.map(s=>s.bus_no).filter(Boolean));
@@ -934,18 +658,11 @@
         div.innerHTML = `<span class="swatch" style="background:${color}"></span> <span>${b.bus_no}</span>`;
         legend.appendChild(div);
       });
-      if(state.school){
-        const div = document.createElement('div'); div.className='item';
-        div.innerHTML = `<span class="swatch" style="background:#f59e0b"></span> <span>المدرسة</span>`;
-        legend.appendChild(div);
-      }
+      if(state.school){ const div = document.createElement('div'); div.className='item'; div.innerHTML = `<span class="swatch" style="background:#f59e0b"></span> <span>المدرسة</span>`; legend.appendChild(div); }
       if(state.buses.some(b=> (b.observer_lat && b.observer_lng) || b.observer_location_text )){
-        const div = document.createElement('div'); div.className='item';
-        div.innerHTML = `<span class="swatch" style="background:#94a3b8"></span> <span>ملاحظو الباصات</span>`;
-        legend.appendChild(div);
+        const div = document.createElement('div'); div.className='item'; div.innerHTML = `<span class="swatch" style="background:#94a3b8"></span> <span>ملاحظو الباصات</span>`; legend.appendChild(div);
       }
     }
-
     function renderRows(){
       const body = qs('#rows'); body.innerHTML = '';
       const q = (qs('#q').value||'').trim().toLowerCase();
@@ -982,9 +699,8 @@
       });
     }
 
-    // ===================== MAP =====================
+    // ===================== MAP (بدون تغيير) =====================
     let map, markersLayer, observersLayer, schoolLayer;
-
     function ensureMap(){
       if (map) return;
       map = L.map('map', {
@@ -992,39 +708,30 @@
         scrollWheelZoom: true, wheelDebounceTime: 10, wheelPxPerZoomLevel: 30,
         touchZoom: 'center', doubleClickZoom: true, boxZoom: true, keyboard: true
       });
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-
-      map.dragging.enable(); map.scrollWheelZoom.enable(); map.touchZoom.enable();
-      map.doubleClickZoom.enable(); map.boxZoom.enable(); map.keyboard.enable();
-
-      markersLayer   = L.layerGroup().addTo(map);
-      observersLayer = L.layerGroup().addTo(map);
-      schoolLayer    = L.layerGroup().addTo(map);
-
-      map.setView([25.285, 51.531], 10);
-
-      window.addEventListener('resize', () => { try { map.invalidateSize(false); } catch(e){} });
-      setTimeout(() => { try { map.invalidateSize(true); } catch(e){} }, 50);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+      map.dragging.enable(); map.scrollWheelZoom.enable(); map.touchZoom.enable(); map.doubleClickZoom.enable(); map.boxZoom.enable(); map.keyboard.enable();
+      markersLayer=L.layerGroup().addTo(map); observersLayer=L.layerGroup().addTo(map); schoolLayer=L.layerGroup().addTo(map);
+      map.setView([25.285,51.531],10);
+      window.addEventListener('resize',()=>{ try{ map.invalidateSize(false);}catch(e){} }); setTimeout(()=>{ try{ map.invalidateSize(true);}catch(e){} },50);
     }
-
-    function clearMapLayers(){
-      if (markersLayer) markersLayer.clearLayers();
-      if (observersLayer) observersLayer.clearLayers();
-      if (schoolLayer) schoolLayer.clearLayers();
+    function clearMapLayers(){ if(markersLayer) markersLayer.clearLayers(); if(observersLayer) observersLayer.clearLayers(); if(schoolLayer) schoolLayer.clearLayers(); }
+    function mapLink(lat,lng){ return `https://maps.google.com/?q=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`; }
+    function popupBtn(href,label,icon='fa-external-link-alt'){ return `<a class="btn-link" target="_blank" rel="noopener" href="${href}"><i class="fa ${icon}"></i> ${label}</a>`; }
+    function createCustomIcon({ type='student', busNo=null }) {
+      let className='custom-map-icon ', icon='';
+      if(type==='student'){ className+='student'; icon='fa-user-graduate'; }
+      else if(type==='bus'){ const busColors=['bus-1','bus-2','bus-3','bus-4','bus-5','bus-6','bus-7','bus-8','bus-9','bus-10','bus-11','bus-12']; const i=busNo?(hashStr(busNo)%12):0; className+=busColors[i]; icon='fa-bus'; }
+      else if(type==='observer'){ className+='observer'; icon='fa-user-shield'; }
+      else if(type==='school'){ className+='school'; icon='fa-school'; }
+      const html=`<div class="${className}"><i class="fas ${icon}"></i></div>`;
+      return L.divIcon({ className:'custom-icon', html, iconSize:[44,44], iconAnchor:[22,22], popupAnchor:[0,-22] });
     }
-
     function addStudentMarker(stu){
-      const p = parseAnyLocation(stu.location_text);
-      const lat = parseFloat(stu.location_lat || p.lat);
-      const lng = parseFloat(stu.location_lng || p.lng);
-      if(Number.isNaN(lat) || Number.isNaN(lng)) return;
-
-      const icon = createCustomIcon({ type:'student', busNo:stu.bus_no });
-      const m = L.marker([lat,lng], { icon });
-      const content = `
+      const p=parseAnyLocation(stu.location_text);
+      const lat=parseFloat(stu.location_lat||p.lat), lng=parseFloat(stu.location_lng||p.lng);
+      if(Number.isNaN(lat)||Number.isNaN(lng)) return;
+      const m=L.marker([lat,lng],{icon:createCustomIcon({type:'student',busNo:stu.bus_no})});
+      const content=`
         <div class="map-popup">
           <div class="title"><i class="fa fa-user-graduate"></i> ${stu.student_name||'—'}</div>
           <div class="meta">باص: <strong>${stu.bus_no||'-'}</strong></div>
@@ -1034,29 +741,19 @@
             <div class="row"><span class="key"><i class="fa fa-id-card"></i> الرقم الشخصي</span><span class="value">${stu.personal_number||'-'}</span></div>
             <div class="row"><span class="key"><i class="fa fa-sticky-note"></i> ملاحظة</span><span class="value">${stu.bus_note||'-'}</span></div>
           </div>
-          <div class="actions">
-            ${popupBtn(mapLink(lat,lng), 'فتح في الخرائط')}
-          </div>
+          <div class="actions">${popupBtn(mapLink(lat,lng),'فتح في الخرائط')}</div>
         </div>`;
-      m.bindTooltip(`${stu.student_name} — باص ${stu.bus_no||'-'}`, {direction:'top', offset:[0,-10]});
+      m.bindTooltip(`${stu.student_name} — باص ${stu.bus_no||'-'}`,{direction:'top',offset:[0,-10]});
       m.bindPopup(content);
-      m.on('click', () => { map.flyTo([lat, lng], Math.max(map.getZoom(), 15), { duration: 0.5 }); m.openPopup(); });
-      markersLayer.addLayer(m);
-      return [lat,lng];
+      m.on('click',()=>{ map.flyTo([lat,lng],Math.max(map.getZoom(),15),{duration:.5}); m.openPopup(); });
+      markersLayer.addLayer(m); return [lat,lng];
     }
-
     function addObserverMarker(bus){
-      let lat = parseFloat(bus.observer_lat);
-      let lng = parseFloat(bus.observer_lng);
-      if((Number.isNaN(lat) || Number.isNaN(lng)) && bus.observer_location_text){
-        const p = parseAnyLocation(bus.observer_location_text);
-        lat = parseFloat(p.lat); lng = parseFloat(p.lng);
-      }
-      if(Number.isNaN(lat) || Number.isNaN(lng)) return;
-
-      const icon = createCustomIcon({ type:'observer', busNo:bus.bus_no });
-      const m = L.marker([lat,lng], { icon });
-      const content = `
+      let lat=parseFloat(bus.observer_lat), lng=parseFloat(bus.observer_lng);
+      if((Number.isNaN(lat)||Number.isNaN(lng)) && bus.observer_location_text){ const p=parseAnyLocation(bus.observer_location_text); lat=parseFloat(p.lat); lng=parseFloat(p.lng); }
+      if(Number.isNaN(lat)||Number.isNaN(lng)) return;
+      const m=L.marker([lat,lng],{icon:createCustomIcon({type:'observer',busNo:bus.bus_no})});
+      const content=`
         <div class="map-popup">
           <div class="title"><i class="fa fa-user-shield"></i> ${bus.observer_name||'ملاحظ باص'}</div>
           <div class="meta">باص: <strong>${bus.bus_no||'-'}</strong></div>
@@ -1066,90 +763,56 @@
             <div class="row"><span class="key"><i class="fa fa-car"></i> اللوحة</span><span class="value">${bus.plate_no||'-'}</span></div>
             <div class="row"><span class="key"><i class="fa fa-users"></i> السعة</span><span class="value">${bus.capacity||'-'}</span></div>
           </div>
-          <div class="actions">
-            ${popupBtn(mapLink(lat,lng), 'فتح في الخرائط')}
-          </div>
+          <div class="actions">${popupBtn(mapLink(lat,lng),'فتح في الخرائط')}</div>
         </div>`;
-      m.bindTooltip(`ملاحظ: ${bus.observer_name||'-'} — باص ${bus.bus_no||'-'}`, {direction:'top', offset:[0,-10]});
+      m.bindTooltip(`ملاحظ: ${bus.observer_name||'-'} — باص ${bus.bus_no||'-'}`,{direction:'top',offset:[0,-10]});
       m.bindPopup(content);
-      m.on('click', () => { map.flyTo([lat, lng], Math.max(map.getZoom(), 15), { duration: 0.5 }); m.openPopup(); });
-      observersLayer.addLayer(m);
-      return [lat,lng];
+      m.on('click',()=>{ map.flyTo([lat,lng],Math.max(map.getZoom(),15),{duration:.5}); m.openPopup(); });
+      observersLayer.addLayer(m); return [lat,lng];
     }
-
     function addSchoolMarker(){
       if(!state.school) return null;
-      const lat = parseFloat(state.school.school_lat);
-      const lng = parseFloat(state.school.school_lng);
-      if(Number.isNaN(lat) || Number.isNaN(lng)) return null;
-
-      const icon = createCustomIcon({ type:'school' });
-      const m = L.marker([lat,lng], { icon });
-      const content = `
+      const lat=parseFloat(state.school.school_lat), lng=parseFloat(state.school.school_lng);
+      if(Number.isNaN(lat)||Number.isNaN(lng)) return null;
+      const m=L.marker([lat,lng],{icon:createCustomIcon({type:'school'})});
+      const content=`
         <div class="map-popup">
           <div class="title"><i class="fa fa-school"></i> ${state.school.school_name||'المدرسة'}</div>
           <div class="grid">
             <div class="row"><span class="key"><i class="fa fa-location-dot"></i> الإحداثيات</span><span class="value">${lat.toFixed(6)}, ${lng.toFixed(6)}</span></div>
             ${state.school.school_location_text ? `<div class="row"><span class="key"><i class="fa fa-map-pin"></i> المصدر</span><span class="value">${state.school.school_location_text}</span></div>` : ''}
           </div>
-          <div class="actions">
-            ${popupBtn(mapLink(lat,lng), 'فتح في الخرائط')}
-          </div>
+          <div class="actions">${popupBtn(mapLink(lat,lng),'فتح في الخرائط')}</div>
         </div>`;
-      m.bindTooltip(`🏫 ${state.school.school_name||'المدرسة'}`, {direction:'top', offset:[0,-10]});
+      m.bindTooltip(`🏫 ${state.school.school_name||'المدرسة'}`,{direction:'top',offset:[0,-10]});
       m.bindPopup(content);
-      m.on('click', () => { map.flyTo([lat, lng], Math.max(map.getZoom(), 15), { duration: 0.5 }); m.openPopup(); });
-      schoolLayer.addLayer(m);
-      return [lat,lng];
+      m.on('click',()=>{ map.flyTo([lat,lng],Math.max(map.getZoom(),15),{duration:.5}); m.openPopup(); });
+      schoolLayer.addLayer(m); return [lat,lng];
+    }
+    function renderMap({ fit=false }={}){
+      ensureMap(); clearMapLayers();
+      const sel = qs('#busFilter'); const filter = sel ? sel.value : ''; const pts=[];
+      const toShow = state.students.filter(s=>{ const p=parseAnyLocation(s.location_text); const has=(s.location_lat&&s.location_lng)||(p.lat&&p.lng); return has && (!filter || s.bus_no===filter); });
+      toShow.forEach(s=>{ const p=addStudentMarker(s); if(p) pts.push(p); });
+      const schPt = addSchoolMarker(); if(schPt) pts.push(schPt);
+      state.buses.filter(b=>!filter || b.bus_no===filter).forEach(b=>{ const p=addObserverMarker(b); if(p) pts.push(p); });
+      renderLegend(); renderBusFilter();
+      if(fit && pts.length){ const bounds=L.latLngBounds(pts); map.fitBounds(bounds.pad(0.2),{animate:true}); }
     }
 
-    function renderMap({ fit = false } = {}){
-      ensureMap();
-      clearMapLayers();
-
-      const sel = qs('#busFilter');
-      const filter = sel ? sel.value : '';
-      const pts = [];
-
-      const toShow = state.students.filter(s=>{
-        const p = parseAnyLocation(s.location_text);
-        const hasPoint = (s.location_lat && s.location_lng) || (p.lat && p.lng);
-        return hasPoint && (!filter || s.bus_no === filter);
-      });
-      toShow.forEach(s=>{ const p = addStudentMarker(s); if(p) pts.push(p); });
-
-      const schPt = addSchoolMarker(); if (schPt) pts.push(schPt);
-
-      state.buses
-        .filter(b=>!filter || b.bus_no===filter)
-        .forEach(b=>{ const p = addObserverMarker(b); if(p) pts.push(p); });
-
-      renderLegend();
-      renderBusFilter();
-
-      if (fit && pts.length) {
-        const bounds = L.latLngBounds(pts);
-        map.fitBounds(bounds.pad(0.2), { animate: true });
-      }
-    }
-
-    // ===================== STUDENT FORM =====================
-    function requiredCheck(el){ if(!el) return false; const ok = !!el.value.trim(); el.classList.toggle('required', !ok); return ok; }
+    // ===================== STUDENT FORM EVENTS (بدون تغيير) =====================
+    function requiredCheck(el){ if(!el) return false; const ok=!!el.value.trim(); el.classList.toggle('required',!ok); return ok; }
     function validateStudent(){
-      const reqs = ['#studentName','#guardianName','#guardianPhone','#personalNo','#busNo'];
-      const latOk = !!qs('#lat').value.trim();
-      const lngOk = !!qs('#lng').value.trim();
-      const anyParsed = parseAnyLocation(qs('#locAny').value);
-      const anyOk = !!anyParsed.lat && !!anyParsed.lng;
-      const basic = reqs.map(s=>requiredCheck(qs(s))).every(Boolean);
-      if(!( (latOk && lngOk) || anyOk )){ qs('#locAny').classList.add('required'); return false; }
-      qs('#locAny').classList.remove('required');
-      return basic;
+      const reqs=['#studentName','#guardianName','#guardianPhone','#personalNo','#busNo'];
+      const latOk=!!qs('#lat').value.trim(), lngOk=!!qs('#lng').value.trim();
+      const anyParsed=parseAnyLocation(qs('#locAny').value); const anyOk=!!anyParsed.lat && !!anyParsed.lng;
+      const basic=reqs.map(s=>requiredCheck(qs(s))).every(Boolean);
+      if(!((latOk&&lngOk)||anyOk)){ qs('#locAny').classList.add('required'); return false; }
+      qs('#locAny').classList.remove('required'); return basic;
     }
     function getStudentForm(){
-      let lat = qs('#lat').value.trim();
-      let lng = qs('#lng').value.trim();
-      if(!lat || !lng){ const p = parseAnyLocation(qs('#locAny').value); lat = lat||p.lat; lng = lng||p.lng; }
+      let lat=qs('#lat').value.trim(), lng=qs('#lng').value.trim();
+      if(!lat || !lng){ const p=parseAnyLocation(qs('#locAny').value); lat=lat||p.lat; lng=lng||p.lng; }
       return {
         student_name: qs('#studentName').value.trim(),
         grade: qs('#grade').value.trim(),
@@ -1171,60 +834,47 @@
       }
     }
     function setStudentForm(o){
-      qs('#studentName').value = o.student_name||'';
-      qs('#grade').value = o.grade||'';
-      qs('#klass').value = o.class||'';
-      qs('#lat').value = o.location_lat||'';
-      qs('#lng').value = o.location_lng||'';
-      qs('#locAny').value = o.location_text || '';
-      qs('#guardianName').value = o.guardian_name||'';
-      qs('#guardianPhone').value = o.guardian_phone||'';
-      qs('#personalNo').value = o.personal_number||'';
-      qs('#busNo').value = o.bus_no||''; updateBusAuto();
-      qs('#busNote').value = o.bus_note||'';
-      qs('#status').value = o.status||'Active';
+      qs('#studentName').value=o.student_name||'';
+      qs('#grade').value=o.grade||'';
+      qs('#klass').value=o.class||'';
+      qs('#lat').value=o.location_lat||'';
+      qs('#lng').value=o.location_lng||'';
+      qs('#locAny').value=o.location_text||'';
+      qs('#guardianName').value=o.guardian_name||'';
+      qs('#guardianPhone').value=o.guardian_phone||'';
+      qs('#personalNo').value=o.personal_number||'';
+      qs('#busNo').value=o.bus_no||''; updateBusAuto();
+      qs('#busNote').value=o.bus_note||'';
+      qs('#status').value=o.status||'Active';
       updateLinkPreview('#locAny','#lat','#lng','#mapLink');
     }
     function clearStudentForm(){ setStudentForm({}); state.editingStudentId=null; qsa('.required').forEach(e=>e.classList.remove('required')); }
     async function addOrUpdateStudent(){
       hydrateLatLngFromAny('#locAny','#lat','#lng');
-      if(!validateStudent()) return showAlert('أكمل الحقول المطلوبة (*) أو أدخل لوكيشن صالح.', 'error');
-      const obj = getStudentForm();
+      if(!validateStudent()) return showAlert('أكمل الحقول المطلوبة (*) أو أدخل لوكيشن صالح.','error');
+      const obj=getStudentForm();
       try{
-        if(!state.editingStudentId){ await sbInsertStudent(obj); showAlert('تم إضافة الطالب بنجاح', 'success'); }
-        else { await sbUpdateStudent(state.editingStudentId, obj); showAlert('تم تحديث بيانات الطالب', 'success'); }
+        if(!state.editingStudentId){ await sbInsertStudent(obj); showAlert('تم إضافة الطالب بنجاح','success'); }
+        else { await sbUpdateStudent(state.editingStudentId,obj); showAlert('تم تحديث بيانات الطالب','success'); }
         clearStudentForm(); await reloadAll();
-      }catch(e){ showAlert('خطأ في الحفظ: '+e.message, 'error'); }
+      }catch(e){ showAlert('خطأ في الحفظ: '+e.message,'error'); }
     }
 
-    // ===================== BUS FORM =====================
+    // ===================== BUS FORM (بدون تغيير) =====================
     function fillBusForm(b){
-      qs('#newBusNo').value = b.bus_no||'';
-      qs('#newPlate').value = b.plate_no||'';
-      qs('#newCapacity').value = b.capacity||'';
-      qs('#newDriver').value = b.driver_name||'';
-      qs('#newDriverPhone').value = b.driver_phone||'';
-      qs('#newObserver').value = b.observer_name||'';
-      qs('#newObserverPhone').value = b.observer_phone||'';
-      qs('#newObserverLocAny').value = b.observer_location_text||'';
-      qs('#newObserverLat').value = b.observer_lat||'';
-      qs('#newObserverLng').value = b.observer_lng||'';
-      qs('#busSubmitLabel').textContent = 'تحديث باص';
-      qs('#cancelBusEdit').style.display = '';
+      qs('#newBusNo').value=b.bus_no||''; qs('#newPlate').value=b.plate_no||''; qs('#newCapacity').value=b.capacity||'';
+      qs('#newDriver').value=b.driver_name||''; qs('#newDriverPhone').value=b.driver_phone||'';
+      qs('#newObserver').value=b.observer_name||''; qs('#newObserverPhone').value=b.observer_phone||'';
+      qs('#newObserverLocAny').value=b.observer_location_text||''; qs('#newObserverLat').value=b.observer_lat||''; qs('#newObserverLng').value=b.observer_lng||'';
+      qs('#busSubmitLabel').textContent='تحديث باص'; qs('#cancelBusEdit').style.display='';
     }
     function clearBusForm(){
       ['#newBusNo','#newPlate','#newCapacity','#newDriver','#newDriverPhone','#newObserver','#newObserverPhone','#newObserverLocAny','#newObserverLat','#newObserverLng'].forEach(s=>qs(s).value='');
-      state.editingBusId = null;
-      qs('#busSubmitLabel').textContent = 'إضافة باص';
-      qs('#cancelBusEdit').style.display = 'none';
+      state.editingBusId=null; qs('#busSubmitLabel').textContent='إضافة باص'; qs('#cancelBusEdit').style.display='none';
     }
     function getBusForm(){
-      let lat = qs('#newObserverLat').value.trim();
-      let lng = qs('#newObserverLng').value.trim();
-      if(!lat || !lng){
-        const p = parseAnyLocation(qs('#newObserverLocAny').value);
-        lat = lat||p.lat; lng = lng||p.lng;
-      }
+      let lat=qs('#newObserverLat').value.trim(), lng=qs('#newObserverLng').value.trim();
+      if(!lat||!lng){ const p=parseAnyLocation(qs('#newObserverLocAny').value); lat=lat||p.lat; lng=lng||p.lng; }
       return {
         bus_no: qs('#newBusNo').value.trim(),
         plate_no: qs('#newPlate').value.trim(),
@@ -1238,61 +888,36 @@
         observer_lng: lng || null
       }
     }
-
     document.addEventListener('click', async (e)=>{
-      const editId = e.target.getAttribute('data-edit');
-      const delId  = e.target.getAttribute('data-del');
-      const bedit  = e.target.getAttribute('data-bedit');
-      const bdel   = e.target.getAttribute('data-bdel');
-
-      if(editId){
-        const row = state.students.find(r=>String(r.id)===String(editId));
-        if(row){ state.editingStudentId = row.id; setStudentForm(row); window.scrollTo({top:0,behavior:'smooth'}); }
-      }
-      if(delId){
-        if(confirm('تأكيد حذف السجل؟')){
-          try{ await sbDeleteStudent(delId); await reloadAll(); showAlert('تم حذف الطالب', 'success'); }
-          catch(e){ showAlert('خطأ الحذف: '+e.message, 'error'); }
-        }
-      }
-
-      if(bedit){
-        const b = state.buses.find(x=>String(x.id)===String(bedit)); if(!b) return;
-        state.editingBusId = b.id; fillBusForm(b);
-        showAlert('تم تحميل بيانات الباص للتعديل', 'info', 2500);
-      }
-      if(bdel){
-        if(confirm('حذف الباص؟')){
-          try{ await sbDeleteBus(bdel); await reloadAll(); showAlert('تم حذف الباص', 'success'); clearBusForm(); }
-          catch(e){ showAlert('خطأ: '+e.message, 'error'); }
-        }
-      }
+      const editId=e.target.getAttribute('data-edit'), delId=e.target.getAttribute('data-del'), bedit=e.target.getAttribute('data-bedit'), bdel=e.target.getAttribute('data-bdel');
+      if(editId){ const row=state.students.find(r=>String(r.id)===String(editId)); if(row){ state.editingStudentId=row.id; setStudentForm(row); window.scrollTo({top:0,behavior:'smooth'}); } }
+      if(delId){ if(confirm('تأكيد حذف السجل؟')){ try{ await sbDeleteStudent(delId); await reloadAll(); showAlert('تم حذف الطالب','success'); }catch(e){ showAlert('خطأ الحذف: '+e.message,'error'); } } }
+      if(bedit){ const b=state.buses.find(x=>String(x.id)===String(bedit)); if(!b) return; state.editingBusId=b.id; fillBusForm(b); showAlert('تم تحميل بيانات الباص للتعديل','info',2500); }
+      if(bdel){ if(confirm('حذف الباص؟')){ try{ await sbDeleteBus(bdel); await reloadAll(); showAlert('تم حذف الباص','success'); clearBusForm(); }catch(e){ showAlert('خطأ: '+e.message,'error'); } } }
     });
 
-    // أزرار الطالب
     qs('#btnAdd').addEventListener('click', addOrUpdateStudent);
     qs('#btnReset').addEventListener('click', clearStudentForm);
-    qsa('#studentName,#lat,#lng,#guardianName,#guardianPhone,#personalNo').forEach(el=>{ el.addEventListener('input', ()=>{ requiredCheck(el); updateLinkPreview('#locAny','#lat','#lng','#mapLink'); }); });
-    qs('#locAny').addEventListener('input', ()=>{ hydrateLatLngFromAny('#locAny','#lat','#lng'); updateLinkPreview('#locAny','#lat','#lng','#mapLink'); });
-    qs('#busNo').addEventListener('change', ()=>{ updateBusAuto(); validateStudent(); });
-    qs('#q').addEventListener('input', ()=>{ renderRows(); });
+    qsa('#studentName,#lat,#lng,#guardianName,#guardianPhone,#personalNo').forEach(el=> el.addEventListener('input',()=>{ requiredCheck(el); updateLinkPreview('#locAny','#lat','#lng','#mapLink'); }));
+    qs('#locAny').addEventListener('input',()=>{ hydrateLatLngFromAny('#locAny','#lat','#lng'); updateLinkPreview('#locAny','#lat','#lng','#mapLink'); });
+    qs('#busNo').addEventListener('change',()=>{ updateBusAuto(); validateStudent(); });
+    qs('#q').addEventListener('input',()=>{ renderRows(); });
 
-    // أزرار الباص
     qs('#addBus').addEventListener('click', async ()=>{
-      const bus = getBusForm();
-      if(!bus.bus_no) return showAlert('أدخل رقم الباص', 'error');
-      if(!bus.plate_no) return showAlert('أدخل رقم اللوحة', 'error');
-      if(!bus.capacity) return showAlert('اختر حجم الباص', 'error');
+      const bus=getBusForm();
+      if(!bus.bus_no) return showAlert('أدخل رقم الباص','error');
+      if(!bus.plate_no) return showAlert('أدخل رقم اللوحة','error');
+      if(!bus.capacity) return showAlert('اختر حجم الباص','error');
       try{
-        if(!state.editingBusId){ await sbInsertBus(bus); showAlert('تم إضافة الباص', 'success'); }
-        else { await sbUpdateBus(state.editingBusId, bus); showAlert('تم تحديث الباص', 'success'); }
+        if(!state.editingBusId){ await sbInsertBus(bus); showAlert('تم إضافة الباص','success'); }
+        else { await sbUpdateBus(state.editingBusId,bus); showAlert('تم تحديث الباص','success'); }
         clearBusForm(); await reloadAll();
-      }catch(e){ showAlert('خطأ: '+e.message, 'error'); }
+      }catch(e){ showAlert('خطأ: '+e.message,'error'); }
     });
-    qs('#cancelBusEdit').addEventListener('click', ()=>{ clearBusForm(); });
+    qs('#cancelBusEdit').addEventListener('click',()=>{ clearBusForm(); });
 
-    // ===================== CSV (التعديل الوحيد هنا) =====================
-    // ترتيب الأعمدة بحيث كل جزء في خلية مستقلة (اسم/صف/شعبة/إحداثيات/أرقام/باص/سائق/ملاحظ/حالة/ملاحظة/تاريخ/رابط)
+    // ===================== CSV / Excel Export & Import =====================
+    // 1) تعريف أعمدة موحّدة للتصدير/الاستيراد (كل صنف في خلية منفصلة)
     const EXPORT_HEADERS = [
       {key:'student_name',     title:'اسم الطالب'},
       {key:'grade',            title:'الصف'},
@@ -1311,12 +936,18 @@
       {key:'status',           title:'الحالة'},
       {key:'bus_note',         title:'ملاحظة الباص'},
       {key:'date_added',       title:'تاريخ الإضافة'},
-      {key:'_Map_Link',        title:'رابط الخريطة'}
+      {key:'_Map_Link',        title:'رابط الخريطة'},
     ];
+
+    // 2) إنشاء رابط الخريطة
     function buildMapLink(row){
-      if(row.location_lat && row.location_lng){ return `https://maps.google.com/?q=${encodeURIComponent(row.location_lat)},${encodeURIComponent(row.location_lng)}`; }
+      if(row.location_lat && row.location_lng){
+        return `https://maps.google.com/?q=${encodeURIComponent(row.location_lat)},${encodeURIComponent(row.location_lng)}`;
+      }
       return mapUrlFrom(row.location_text||'');
     }
+
+    // 3) اختيار البيانات المفلترة بنفس ترتيب العرض
     function getFilteredStudents(){
       const q = (qs('#q')?.value||'').trim().toLowerCase();
       if(!q) return state.students;
@@ -1325,157 +956,215 @@
         return blob.includes(q);
       });
     }
+
+    // 4) تصدير CSV (UTF-8 + BOM) – آمن للعربية وخلايا منفصلة
     function toCSVOrdered(arr){
       const header = EXPORT_HEADERS.map(h=>`"${h.title}"`).join(',');
-      if(!arr.length){ return header + '\n'; }
       const lines = [header];
       arr.forEach(o=>{
-        const row = {...o}; row._Map_Link = buildMapLink(row);
-        const cols = EXPORT_HEADERS.map(h=> {
-          const val = row[h.key] ?? '';
-          // ضمان خلية منفصلة + الهروب الصحيح
-          return '"' + String(val).replaceAll('"','""') + '"';
-        }).join(',');
+        const row = {...o, _Map_Link: buildMapLink(o)};
+        const cols = EXPORT_HEADERS.map(h => '"' + String(row[h.key] ?? '').replaceAll('"','""') + '"').join(',');
         lines.push(cols);
       });
-      return lines.join('\n');
+      return lines.join('\n') + '\n';
     }
-    qs('#btnExport').addEventListener('click', ()=>{
-      const data = getFilteredStudents(); if(!data.length) return showAlert('لا توجد بيانات للتصدير', 'error');
-      const csv = toCSVOrdered(data); const BOM = '\uFEFF';
+    function downloadCSV(rows, filename){
+      const csv = toCSVOrdered(rows);
+      const BOM = '\uFEFF'; // يدعم العربية في إكسل
       const blob = new Blob([BOM, csv], {type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'students_export.csv'; a.click();
-      showAlert('تم تصدير البيانات', 'success');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+    }
+
+    // 5) تصدير Excel (.xlsx) بنفس الأعمدة والترتيب
+    function toArrayOfObjectsForXLSX(arr){
+      return arr.map(o=>{
+        const row = {...o, _Map_Link: buildMapLink(o)};
+        const out = {};
+        EXPORT_HEADERS.forEach(h=>{ out[h.title] = row[h.key] ?? ''; });
+        return out;
+      });
+    }
+    function downloadXLSX(rows, filename){
+      const data = toArrayOfObjectsForXLSX(rows);
+      const ws = XLSX.utils.json_to_sheet(data, {header: EXPORT_HEADERS.map(h=>h.title)});
+      // تعيين RTL (اختياري – بعض الإصدارات تتجاهل الاتجاه لكن الأعمدة عربية)
+      ws['!rtl'] = true;
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
+      XLSX.writeFile(wb, filename);
+    }
+
+    // 6) أزرار التصدير
+    qs('#btnExport').addEventListener('click', ()=>{
+      const data = getFilteredStudents();
+      if(!data.length) return showAlert('لا توجد بيانات للتصدير','error');
+      downloadCSV(data, 'students_export.csv');
+      showAlert('تم تصدير CSV','success');
+    });
+    qs('#btnExportXLSX').addEventListener('click', ()=>{
+      const data = getFilteredStudents();
+      if(!data.length) return showAlert('لا توجد بيانات للتصدير','error');
+      downloadXLSX(data, 'students_export.xlsx');
+      showAlert('تم تصدير Excel','success');
     });
     qs('#btnExportAll').addEventListener('click', ()=>{
-      const data = state.students; if(!data.length) return showAlert('لا توجد بيانات للتصدير', 'error');
-      const csv = toCSVOrdered(data); const BOM = '\uFEFF';
-      const blob = new Blob([BOM, csv], {type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'students_export_all.csv'; a.click();
-      showAlert('تم تصدير جميع البيانات', 'success');
+      const data = state.students;
+      if(!data.length) return showAlert('لا توجد بيانات للتصدير','error');
+      downloadCSV(data, 'students_export_all.csv');
+      showAlert('تم تصدير جميع البيانات','success');
     });
     qs('#btnExportBus').addEventListener('click', ()=>{
-      const sel = qs('#busFilter'); const bus = sel.value.trim(); if(!bus) return showAlert('اختر رقم باص أولاً', 'error');
-      const data = state.students.filter(s=>s.bus_no===bus); if(!data.length) return showAlert('لا توجد سجلات لهذا الباص', 'error');
-      const csv = toCSVOrdered(data); const BOM='\uFEFF'; const blob=new Blob([BOM,csv],{type:'text/csv;charset=utf-8;'});
-      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download = `students_bus_${bus}.csv`; a.click();
-      showAlert(`تم تصدير بيانات الباص ${bus}`, 'success');
+      const sel = qs('#busFilter'); const bus = sel.value.trim();
+      if(!bus) return showAlert('اختر رقم باص أولاً','error');
+      const data = state.students.filter(s=>s.bus_no===bus);
+      if(!data.length) return showAlert('لا توجد سجلات لهذا الباص','error');
+      downloadCSV(data, `students_bus_${bus}.csv`);
+      showAlert(`تم تصدير بيانات الباص ${bus}`,'success');
     });
 
-    // استيراد CSV
-    function fromCSV(text){
-      const headerMap = {
-        'اسم الطالب':'student_name', 'Student_Name':'student_name',
-        'الموقع (نص)':'location_text', 'Location_Text':'location_text', 'الموقع/الخريطة':'location_text',
-        'Lat':'location_lat', 'Location_Lat':'location_lat',
-        'Lng':'location_lng', 'Location_Lng':'location_lng',
-        'ولي الأمر':'guardian_name', 'Guardian_Name':'guardian_name',
-        'هاتف ولي الأمر':'guardian_phone', 'هاتف':'guardian_phone', 'Guardian_Phone':'guardian_phone',
-        'الرقم الشخصي':'personal_number', 'Personal_Number':'personal_number',
-        'رقم الباص':'bus_no', 'الباص':'bus_no', 'Bus_No':'bus_no',
-        'اسم السائق':'driver_name', 'سائق':'driver_name', 'Driver_Name':'driver_name',
-        'هاتف السائق':'driver_phone', 'Driver_Phone':'driver_phone',
-        'اسم الملاحظ':'observer_name', 'ملاحظ':'observer_name', 'Observer_Name':'observer_name',
-        'هاتف الملاحظ':'observer_phone', 'Observer_Phone':'observer_phone',
-        'الحالة':'status', 'حالة':'status', 'Status':'status',
-        'ملاحظة الباص':'bus_note', 'ملاحظة':'bus_note', 'Bus_Note':'bus_note',
-        'تاريخ الإضافة':'date_added', 'تاريخ':'date_added', 'Date_Added':'date_added',
-        'الصف':'grade', 'Grade':'grade',
-        'الشعبة':'class', 'Class':'class',
-        'رابط الخريطة':'_Map_Link', '_Map_Link':'_Map_Link'
-      };
+    // 7) استيراد CSV/Excel بنفس العناوين (عربي/إنجليزي)
+    function normalizeHeadersToKeys(headers){
+      const headerMap = new Map([
+        ['اسم الطالب','student_name'],['Student_Name','student_name'],['student_name','student_name'],
+        ['الصف','grade'],['Grade','grade'],['grade','grade'],
+        ['الشعبة','class'],['Class','class'],['class','class'],
+        ['الموقع (نص)','location_text'],['Location_Text','location_text'],['location_text','location_text'],['الموقع/الخريطة','location_text'],
+        ['Lat','location_lat'],['Location_Lat','location_lat'],['location_lat','location_lat'],
+        ['Lng','location_lng'],['Location_Lng','location_lng'],['location_lng','location_lng'],
+        ['ولي الأمر','guardian_name'],['Guardian_Name','guardian_name'],['guardian_name','guardian_name'],
+        ['هاتف ولي الأمر','guardian_phone'],['Guardian_Phone','guardian_phone'],['هاتف','guardian_phone'],['guardian_phone','guardian_phone'],
+        ['الرقم الشخصي','personal_number'],['Personal_Number','personal_number'],['personal_number','personal_number'],
+        ['رقم الباص','bus_no'],['Bus_No','bus_no'],['bus_no','bus_no'],['الباص','bus_no'],
+        ['اسم السائق','driver_name'],['Driver_Name','driver_name'],['driver_name','driver_name'],['سائق','driver_name'],
+        ['هاتف السائق','driver_phone'],['Driver_Phone','driver_phone'],['driver_phone','driver_phone'],
+        ['اسم الملاحظ','observer_name'],['Observer_Name','observer_name'],['observer_name','observer_name'],['ملاحظ','observer_name'],
+        ['هاتف الملاحظ','observer_phone'],['Observer_Phone','observer_phone'],['observer_phone','observer_phone'],
+        ['الحالة','status'],['Status','status'],['status','status'],['حالة','status'],
+        ['ملاحظة الباص','bus_note'],['Bus_Note','bus_note'],['bus_note','bus_note'],['ملاحظة','bus_note'],
+        ['تاريخ الإضافة','date_added'],['Date_Added','date_added'],['date_added','date_added'],['تاريخ','date_added'],
+        ['رابط الخريطة','_Map_Link'],['_Map_Link','_Map_Link']
+      ]);
+      return headers.map(h => headerMap.get(h?.trim()) || h?.trim());
+    }
+
+    function parseCSV(text){
       const lines = text.split(/\r?\n/).filter(l=>l.length>0);
       if(!lines.length) return [];
       const rawHeaders = lines.shift().split(',').map(h=>h.replace(/^\"|\"$/g,''));
-      const keys = rawHeaders.map(h=> headerMap[h]?.toString() || h);
+      const keys = normalizeHeadersToKeys(rawHeaders);
       const out = [];
       lines.forEach(line=>{
         const cols = []; let cur=''; let inQ=false;
         for(let i=0;i<line.length;i++){
           const ch=line[i];
-          if(ch==='"'){
-            if(inQ && line[i+1]==='"'){ cur+='"'; i++; }
-            else{ inQ=!inQ; }
-          } else if(ch===',' && !inQ){ cols.push(cur); cur=''; }
+          if(ch==='"'){ if(inQ && line[i+1]==='"'){ cur+='"'; i++; } else { inQ=!inQ; } }
+          else if(ch===',' && !inQ){ cols.push(cur); cur=''; }
           else{ cur+=ch; }
         }
         cols.push(cur);
-        const obj = {}; keys.forEach((k,idx)=>{ const val=(cols[idx]??'').replace(/^\"|\"$/g,''); if(k && k!=='_Map_Link') obj[k]=val; });
-        if((!obj.location_lat || !obj.location_lng) && obj.location_text){ const p=parseAnyLocation(obj.location_text); if(p.lat&&p.lng){ obj.location_lat=obj.location_lat||p.lat; obj.location_lng=obj.location_lng||p.lng; } }
+        const obj = {};
+        keys.forEach((k,idx)=>{
+          if(!k || k==='_Map_Link') return;
+          const val = (cols[idx]??'').replace(/^\"|\"$/g,'');
+          obj[k] = val;
+        });
+        // استنباط الإحداثيات عند الحاجة
+        if((!obj.location_lat || !obj.location_lng) && obj.location_text){
+          const p=parseAnyLocation(obj.location_text);
+          if(p.lat&&p.lng){ obj.location_lat=obj.location_lat||p.lat; obj.location_lng=obj.location_lng||p.lng; }
+        }
         out.push(obj);
       });
       return out;
     }
+
+    async function handleImport(file){
+      try{
+        const ext = (file.name.split('.').pop()||'').toLowerCase();
+        let rows = [];
+        if(ext === 'csv'){
+          const text = await file.text();
+          // إزالة BOM إن وُجد (حتى مع دعمنا لبوم)
+          const clean = text.replace(/^\uFEFF/,'');
+          rows = parseCSV(clean);
+        } else if (ext === 'xlsx'){
+          const buf = await file.arrayBuffer();
+          const wb = XLSX.read(buf, {type:'array'});
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(ws, {defval:'', raw:false});
+          if(!json.length) rows = [];
+          else {
+            const headers = Object.keys(json[0]);
+            const keys = normalizeHeadersToKeys(headers);
+            rows = json.map(row=>{
+              const obj = {};
+              headers.forEach((h,idx)=>{
+                const k = keys[idx];
+                if(!k || k==='_Map_Link') return;
+                obj[k] = row[h];
+              });
+              if((!obj.location_lat || !obj.location_lng) && obj.location_text){
+                const p=parseAnyLocation(obj.location_text);
+                if(p.lat&&p.lng){ obj.location_lat=obj.location_lat||p.lat; obj.location_lng=obj.location_lng||p.lng; }
+              }
+              return obj;
+            });
+          }
+        } else {
+          return showAlert('الملف غير مدعوم. استخدم CSV أو Excel','error');
+        }
+
+        if(!rows.length) return showAlert('لا يوجد بيانات صالحة للاستيراد','error');
+
+        // إدخال كل صف
+        for(const r of rows){ await sbInsertStudent(r); }
+        await reloadAll();
+        showAlert(`تم استيراد ${rows.length} سجل بنجاح`,'success');
+      }catch(err){
+        console.error(err);
+        showAlert('فشل الاستيراد: '+err.message,'error');
+      }
+    }
+
     qs('#fileImport').addEventListener('change', async (e)=>{
       const file = e.target.files?.[0]; if(!file) return;
-      try{
-        const text = await file.text();
-        const rows = fromCSV(text);
-        if(!rows.length) return showAlert('لا يوجد بيانات صالحة', 'error');
-        for(const r of rows){ await sbInsertStudent(r); }
-        await reloadAll(); showAlert(`تم استيراد ${rows.length} سجل`, 'success');
-      }catch(err){ console.error(err); showAlert('فشل الاستيراد: '+err.message, 'error'); }
+      await handleImport(file);
       e.target.value = '';
     });
 
-    // المدرسة
+    // ===================== SCHOOL / MAP BUTTONS (بدون تغيير) =====================
     qs('#schoolLocAny').addEventListener('input', ()=>{ hydrateLatLngFromAny('#schoolLocAny','#schoolLat','#schoolLng'); updateLinkPreview('#schoolLocAny','#schoolLat','#schoolLng','#schoolMapLink'); });
     qsa('#schoolName,#schoolLat,#schoolLng').forEach(el=> el.addEventListener('input', ()=> updateLinkPreview('#schoolLocAny','#schoolLat','#schoolLng','#schoolMapLink') ));
     qs('#btnSaveSchool').addEventListener('click', async ()=>{
-      const name = qs('#schoolName').value.trim();
-      let lat = qs('#schoolLat').value.trim();
-      let lng = qs('#schoolLng').value.trim();
-      if(!lat || !lng){ const p = parseAnyLocation(qs('#schoolLocAny').value); lat = lat||p.lat; lng = lng||p.lng; }
-      if(!name || !lat || !lng){ return showAlert('يرجى إدخال اسم المدرسة وموقع صحيح', 'error'); }
+      const name=qs('#schoolName').value.trim();
+      let lat=qs('#schoolLat').value.trim(), lng=qs('#schoolLng').value.trim();
+      if(!lat || !lng){ const p=parseAnyLocation(qs('#schoolLocAny').value); lat=lat||p.lat; lng=lng||p.lng; }
+      if(!name || !lat || !lng){ return showAlert('يرجى إدخال اسم المدرسة وموقع صحيح','error'); }
       try{
-        const payload = { school_name: name, school_lat: Number(lat), school_lng: Number(lng), school_location_text: qs('#schoolLocAny').value.trim() };
+        const payload = { school_name:name, school_lat:Number(lat), school_lng:Number(lng), school_location_text:qs('#schoolLocAny').value.trim() };
         state.school = await sbUpsertSchool(payload);
-        showAlert('تم حفظ إعداد المدرسة', 'success'); renderMap({fit:false});
-      }catch(e){ showAlert('خطأ حفظ إعداد المدرسة: '+e.message, 'error'); }
+        showAlert('تم حفظ إعداد المدرسة','success'); renderMap({fit:false});
+      }catch(e){ showAlert('خطأ حفظ إعداد المدرسة: '+e.message,'error'); }
     });
     qs('#btnClearSchool').addEventListener('click', ()=>{
       qs('#schoolName').value=''; qs('#schoolLocAny').value=''; qs('#schoolLat').value=''; qs('#schoolLng').value='';
       updateLinkPreview('#schoolLocAny','#schoolLat','#schoolLng','#schoolMapLink');
     });
+    qs('#fitAll').addEventListener('click', ()=>{ ensureMap(); try{ map.invalidateSize(true);}catch(e){} renderMap({fit:true}); });
+    qs('#refreshMap').addEventListener('click', ()=>{ ensureMap(); try{ map.invalidateSize(true);}catch(e){} reloadAll(); });
+    qs('#busFilter').addEventListener('change', ()=>{ ensureMap(); try{ map.invalidateSize(false);}catch(e){} renderMap({fit:false}); });
 
-    // BOOTSTRAP + أزرار الخريطة
-    qs('#fitAll').addEventListener('click', ()=>{
-      ensureMap();
-      try { map.invalidateSize(true); } catch(e){}
-      renderMap({ fit: true });
-    });
-    qs('#refreshMap').addEventListener('click', ()=>{
-      ensureMap();
-      try { map.invalidateSize(true); } catch(e){}
-      reloadAll();
-    });
-    qs('#busFilter').addEventListener('change', ()=>{
-      ensureMap();
-      try { map.invalidateSize(false); } catch(e){}
-      renderMap({ fit: false });
-    });
-
+    // ===================== BOOTSTRAP =====================
     async function reloadAll(){
-      state.buses = await sbSelectBuses();
-      renderBusOptions(); renderBusManager(); renderBusFilter();
-
-      state.students = await sbSelectStudents();
-      renderRows();
-
-      state.school = await sbGetSchool();
-      renderLegend(); renderMap({fit:false});
+      state.buses = await sbSelectBuses(); renderBusOptions(); renderBusManager(); renderBusFilter();
+      state.students = await sbSelectStudents(); renderRows();
+      state.school = await sbGetSchool(); renderLegend(); renderMap({fit:false});
     }
     async function bootstrap(){
-      const session = await requireAuth();
-      if(!session) return;
-
-      initTheme();
-      initTabs();
-      initCollapsibleSections();
-
+      const session = await requireAuth(); if(!session) return;
+      initTheme(); initTabs(); initCollapsibleSections();
       await reloadAll();
     }
-
     qs('#themeToggle').addEventListener('click', toggleTheme);
     (async ()=>{ await bootstrap(); })();
   </script>
