@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -120,7 +121,8 @@
     .auth-overlay{position:fixed;inset:0;background:linear-gradient(135deg,rgba(10,14,39,.95) 0%,rgba(15,20,25,.98) 100%);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;z-index:999}
     [data-theme="light"] .auth-overlay{background:linear-gradient(135deg,rgba(240,249,255,.95) 0%,rgba(248,250,252,.98) 100%)}
     .auth-card{width:min(560px,94vw);background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:28px;padding:32px;box-shadow:0 24px 80px rgba(0,0,0,.6);animation:slideUp .6s cubic-bezier(.4,0,.2,1)}
-    @keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}
+    }
     .auth-title{font-size:24px;font-weight:700;margin-bottom:16px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .custom-map-icon{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:3px solid rgba(255,255,255,.9);box-shadow:0 8px 24px rgba(0,0,0,.5),0 0 0 4px rgba(255,255,255,.1),inset 0 2px 4px rgba(255,255,255,.3);transition:all .3s cubic-bezier(.4,0,.2,1);cursor:pointer;animation:markerPulse 2s ease-in-out infinite}
     @keyframes markerPulse{0%,100%{box-shadow:0 8px 24px rgba(0,0,0,.5),0 0 0 4px rgba(255,255,255,.1),inset 0 2px 4px rgba(255,255,255,.3)}50%{box-shadow:0 12px 32px rgba(0,0,0,.6),0 0 0 8px rgba(255,255,255,.2),inset 0 2px 4px rgba(255,255,255,.4)}}
@@ -236,7 +238,9 @@
             </div>
             <div class="row">
               <button class="btn primary" id="btnSaveSchool"><i class="fas fa-save"></i> حفظ إعداد المدرسة</button>
-              <button class="btn" id="btnClearSchool"><i class="fas fa-eraser"></i> تفريغ</button>
+              <!-- تعديل زر المدرسة: استبدال تفريغ بـ تعديل + إضافة حذف -->
+              <button class="btn" id="btnEditSchool"><i class="fas fa-edit"></i> تعديل</button>
+              <button class="btn danger" id="btnDeleteSchool"><i class="fas fa-trash"></i> حذف</button>
             </div>
           </div>
           <div class="grid grid-3 mt8">
@@ -602,6 +606,12 @@
     async function sbDeleteAll(){ const user = await sbUser(); if(!user) return; await supabase.from('students').delete().eq('profile_id', user.id); }
     async function sbGetSchool(){ const user = await sbUser(); if(!user) return null; const { data, error } = await supabase.from('school_settings').select('*').eq('profile_id', user.id).single(); if(error && error.code!=='PGRST116'){ showAlert('خطأ تحميل إعداد المدرسة: '+error.message,'error'); return null; } return data||null; }
     async function sbUpsertSchool(obj){ const user = await sbUser(); if(!user) return; const { data, error } = await supabase.from('school_settings').upsert([{...obj, profile_id: user.id}],{ onConflict:'profile_id' }).select().single(); if(error) throw error; return data; }
+    // إضافة: دالة حذف إعداد المدرسة فقط
+    async function sbDeleteSchool(){
+      const user = await sbUser(); if(!user) return;
+      const { error } = await supabase.from('school_settings').delete().eq('profile_id', user.id);
+      if(error) throw error;
+    }
 
     // ===================== STATE & RENDERERS (بدون تغيير) =====================
     let state = { buses: [], students: [], editingStudentId: null, editingBusId: null, school: null };
@@ -700,7 +710,7 @@
       });
     }
 
-    // ===================== MAP (بدون تغيير) =====================
+    // ===================== MAP (مع تلوين الطالب حسب الباص فقط) =====================
     let map, markersLayer, observersLayer, schoolLayer;
     function ensureMap(){
       if (map) return;
@@ -718,15 +728,31 @@
     function clearMapLayers(){ if(markersLayer) markersLayer.clearLayers(); if(observersLayer) observersLayer.clearLayers(); if(schoolLayer) schoolLayer.clearLayers(); }
     function mapLink(lat,lng){ return `https://maps.google.com/?q=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`; }
     function popupBtn(href,label,icon='fa-external-link-alt'){ return `<a class="btn-link" target="_blank" rel="noopener" href="${href}"><i class="fa ${icon}"></i> ${label}</a>`; }
+
+    // تعديل: تلوين أيقونة الطالب حسب رقم الباص
     function createCustomIcon({ type='student', busNo=null }) {
+      const color = busNo ? busColor(busNo) : null;
+
+      if (type === 'student') {
+        const html = `
+          <div class="custom-map-icon student" style="${color ? `background: ${color};` : ''}">
+            <i class="fas fa-user-graduate"></i>
+          </div>`;
+        return L.divIcon({ className:'custom-icon', html, iconSize:[44,44], iconAnchor:[22,22], popupAnchor:[0,-22] });
+      }
+
       let className='custom-map-icon ', icon='';
-      if(type==='student'){ className+='student'; icon='fa-user-graduate'; }
-      else if(type==='bus'){ const busColors=['bus-1','bus-2','bus-3','bus-4','bus-5','bus-6','bus-7','bus-8','bus-9','bus-10','bus-11','bus-12']; const i=busNo?(hashStr(busNo)%12):0; className+=busColors[i]; icon='fa-bus'; }
+      if(type==='bus'){
+        const busColors=['bus-1','bus-2','bus-3','bus-4','bus-5','bus-6','bus-7','bus-8','bus-9','bus-10','bus-11','bus-12'];
+        const i=busNo?(hashStr(busNo)%12):0; className+=busColors[i]; icon='fa-bus';
+      }
       else if(type==='observer'){ className+='observer'; icon='fa-user-shield'; }
       else if(type==='school'){ className+='school'; icon='fa-school'; }
+
       const html=`<div class="${className}"><i class="fas ${icon}"></i></div>`;
       return L.divIcon({ className:'custom-icon', html, iconSize:[44,44], iconAnchor:[22,22], popupAnchor:[0,-22] });
     }
+
     function addStudentMarker(stu){
       const p=parseAnyLocation(stu.location_text);
       const lat=parseFloat(stu.location_lat||p.lat), lng=parseFloat(stu.location_lng||p.lng);
@@ -918,7 +944,6 @@
     qs('#cancelBusEdit').addEventListener('click',()=>{ clearBusForm(); });
 
     // ===================== CSV / Excel Export & Import =====================
-    // 1) تعريف أعمدة موحّدة للتصدير/الاستيراد (كل صنف في خلية منفصلة)
     const EXPORT_HEADERS = [
       {key:'student_name',     title:'اسم الطالب'},
       {key:'grade',            title:'الصف'},
@@ -940,7 +965,6 @@
       {key:'_Map_Link',        title:'رابط الخريطة'},
     ];
 
-    // 2) إنشاء رابط الخريطة
     function buildMapLink(row){
       if(row.location_lat && row.location_lng){
         return `https://maps.google.com/?q=${encodeURIComponent(row.location_lat)},${encodeURIComponent(row.location_lng)}`;
@@ -948,7 +972,6 @@
       return mapUrlFrom(row.location_text||'');
     }
 
-    // 3) اختيار البيانات المفلترة بنفس ترتيب العرض
     function getFilteredStudents(){
       const q = (qs('#q')?.value||'').trim().toLowerCase();
       if(!q) return state.students;
@@ -958,7 +981,6 @@
       });
     }
 
-    // 4) تصدير CSV (UTF-8 + BOM) – آمن للعربية وخلايا منفصلة
     function toCSVOrdered(arr){
       const header = EXPORT_HEADERS.map(h=>`"${h.title}"`).join(',');
       const lines = [header];
@@ -971,12 +993,11 @@
     }
     function downloadCSV(rows, filename){
       const csv = toCSVOrdered(rows);
-      const BOM = '\uFEFF'; // يدعم العربية في إكسل
+      const BOM = '\uFEFF';
       const blob = new Blob([BOM, csv], {type:'text/csv;charset=utf-8;'});
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
     }
 
-    // 5) تصدير Excel (.xlsx) بنفس الأعمدة والترتيب
     function toArrayOfObjectsForXLSX(arr){
       return arr.map(o=>{
         const row = {...o, _Map_Link: buildMapLink(o)};
@@ -988,14 +1009,12 @@
     function downloadXLSX(rows, filename){
       const data = toArrayOfObjectsForXLSX(rows);
       const ws = XLSX.utils.json_to_sheet(data, {header: EXPORT_HEADERS.map(h=>h.title)});
-      // تعيين RTL (اختياري – بعض الإصدارات تتجاهل الاتجاه لكن الأعمدة عربية)
       ws['!rtl'] = true;
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
       XLSX.writeFile(wb, filename);
     }
 
-    // 6) أزرار التصدير
     qs('#btnExport').addEventListener('click', ()=>{
       const data = getFilteredStudents();
       if(!data.length) return showAlert('لا توجد بيانات للتصدير','error');
@@ -1023,7 +1042,6 @@
       showAlert(`تم تصدير بيانات الباص ${bus}`,'success');
     });
 
-    // 7) استيراد CSV/Excel بنفس العناوين (عربي/إنجليزي)
     function normalizeHeadersToKeys(headers){
       const headerMap = new Map([
         ['اسم الطالب','student_name'],['Student_Name','student_name'],['student_name','student_name'],
@@ -1069,7 +1087,6 @@
           const val = (cols[idx]??'').replace(/^\"|\"$/g,'');
           obj[k] = val;
         });
-        // استنباط الإحداثيات عند الحاجة
         if((!obj.location_lat || !obj.location_lng) && obj.location_text){
           const p=parseAnyLocation(obj.location_text);
           if(p.lat&&p.lng){ obj.location_lat=obj.location_lat||p.lat; obj.location_lng=obj.location_lng||p.lng; }
@@ -1085,7 +1102,6 @@
         let rows = [];
         if(ext === 'csv'){
           const text = await file.text();
-          // إزالة BOM إن وُجد (حتى مع دعمنا لبوم)
           const clean = text.replace(/^\uFEFF/,'');
           rows = parseCSV(clean);
         } else if (ext === 'xlsx'){
@@ -1117,7 +1133,6 @@
 
         if(!rows.length) return showAlert('لا يوجد بيانات صالحة للاستيراد','error');
 
-        // إدخال كل صف
         for(const r of rows){ await sbInsertStudent(r); }
         await reloadAll();
         showAlert(`تم استيراد ${rows.length} سجل بنجاح`,'success');
@@ -1133,7 +1148,7 @@
       e.target.value = '';
     });
 
-    // ===================== SCHOOL / MAP BUTTONS (بدون تغيير) =====================
+    // ===================== SCHOOL / MAP BUTTONS (تعديل + حذف فقط) =====================
     qs('#schoolLocAny').addEventListener('input', ()=>{ hydrateLatLngFromAny('#schoolLocAny','#schoolLat','#schoolLng'); updateLinkPreview('#schoolLocAny','#schoolLat','#schoolLng','#schoolMapLink'); });
     qsa('#schoolName,#schoolLat,#schoolLng').forEach(el=> el.addEventListener('input', ()=> updateLinkPreview('#schoolLocAny','#schoolLat','#schoolLng','#schoolMapLink') ));
     qs('#btnSaveSchool').addEventListener('click', async ()=>{
@@ -1147,10 +1162,36 @@
         showAlert('تم حفظ إعداد المدرسة','success'); renderMap({fit:false});
       }catch(e){ showAlert('خطأ حفظ إعداد المدرسة: '+e.message,'error'); }
     });
-    qs('#btnClearSchool').addEventListener('click', ()=>{
-      qs('#schoolName').value=''; qs('#schoolLocAny').value=''; qs('#schoolLat').value=''; qs('#schoolLng').value='';
+
+    // زر تعديل المدرسة: تعبئة الحقول من السجل الحالي
+    qs('#btnEditSchool').addEventListener('click', async ()=>{
+      if(!state.school){
+        showAlert('لا توجد بيانات مدرسة محفوظة بعد.', 'error');
+        return;
+      }
+      qs('#schoolName').value = state.school.school_name || '';
+      qs('#schoolLocAny').value = state.school.school_location_text || '';
+      qs('#schoolLat').value = state.school.school_lat ?? '';
+      qs('#schoolLng').value = state.school.school_lng ?? '';
       updateLinkPreview('#schoolLocAny','#schoolLat','#schoolLng','#schoolMapLink');
+      showAlert('تم تحميل بيانات المدرسة للتعديل.', 'info');
     });
+
+    // زر حذف المدرسة: حذف السجل وإفراغ الواجهة وتحديث الخريطة
+    qs('#btnDeleteSchool').addEventListener('click', async ()=>{
+      if(!confirm('تأكيد حذف إعداد المدرسة؟')) return;
+      try{
+        await sbDeleteSchool();
+        state.school = null;
+        qs('#schoolName').value=''; qs('#schoolLocAny').value=''; qs('#schoolLat').value=''; qs('#schoolLng').value='';
+        updateLinkPreview('#schoolLocAny','#schoolLat','#schoolLng','#schoolMapLink');
+        renderMap({fit:false});
+        showAlert('تم حذف إعداد المدرسة.', 'success');
+      }catch(e){
+        showAlert('خطأ حذف إعداد المدرسة: ' + e.message, 'error');
+      }
+    });
+
     qs('#fitAll').addEventListener('click', ()=>{ ensureMap(); try{ map.invalidateSize(true);}catch(e){} renderMap({fit:true}); });
     qs('#refreshMap').addEventListener('click', ()=>{ ensureMap(); try{ map.invalidateSize(true);}catch(e){} reloadAll(); });
     qs('#busFilter').addEventListener('change', ()=>{ ensureMap(); try{ map.invalidateSize(false);}catch(e){} renderMap({fit:false}); });
@@ -1170,16 +1211,14 @@
     (async ()=>{ await bootstrap(); })();
   </script>
 <script>
-
 qs('#btnClearAll').addEventListener('click', async () => {
   if (!confirm('تأكيد مسح جميع سجلات الطلاب من حسابك؟ هذا الإجراء غير قابل للاسترجاع.')) return;
   try {
-    // تعطيل الزر مؤقتًا
     const btn = qs('#btnClearAll');
     btn.disabled = true;
 
-    await sbDeleteAll();          // يمسح الطلاب حسب profile_id
-    await reloadAll();            // يعيد تحميل الحالة والجدول والخريطة
+    await sbDeleteAll();
+    await reloadAll();
     showAlert('تم مسح جميع سجلات الطلاب بنجاح.', 'success');
   } catch (e) {
     showAlert('خطأ أثناء المسح: ' + e.message, 'error');
@@ -1192,4 +1231,4 @@ qs('#btnClearAll').addEventListener('click', async () => {
 
 </body>
 </html>
-
+```
